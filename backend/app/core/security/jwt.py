@@ -1,91 +1,84 @@
 """
-JWT Token Management
+JWT Token Utilities
 
-This module handles JWT token creation, validation, and decoding.
+This module provides JWT token creation and verification functionality.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Optional, Dict, Any
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from app.core.config import settings
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT settings
-ALGORITHM = settings.ALGORITHM
-SECRET_KEY = settings.SECRET_KEY
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 def create_access_token(
-    subject: Union[str, int],
+    subject: str,
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """
-    Create a JWT access token.
-
+    Create a JWT access token
+    
     Args:
-        subject: The subject (user ID or other identifier)
-        expires_delta: Custom expiration time delta
-
+        subject: User ID or identifier
+        expires_delta: Custom expiration time
+        
     Returns:
-        Encoded JWT token as string
+        Encoded JWT token
     """
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    to_encode = {
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode: Dict[str, Any] = {
         "exp": expire,
         "sub": str(subject),
         "type": "access"
     }
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+    
     return encoded_jwt
 
 
-def verify_token(token: str) -> Optional[dict]:
+def verify_token(token: str) -> Optional[Dict[str, Any]]:
     """
-    Verify and decode a JWT token.
-
+    Verify and decode a JWT token
+    
     Args:
-        token: JWT token string
-
+        token: JWT token to verify
+        
     Returns:
         Decoded token payload or None if invalid
     """
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
         return payload
     except JWTError:
         return None
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def get_user_id_from_token(token: str) -> Optional[int]:
     """
-    Verify a plain password against its hash.
-
+    Extract user ID from JWT token
+    
     Args:
-        plain_password: Plain text password
-        hashed_password: Hashed password
-
+        token: JWT token
+        
     Returns:
-        True if password matches, False otherwise
+        User ID or None if invalid
     """
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    """
-    Hash a plain password.
-
-    Args:
-        password: Plain text password
-
-    Returns:
-        Hashed password
-    """
-    return pwd_context.hash(password)
+    payload = verify_token(token)
+    if payload and "sub" in payload:
+        try:
+            return int(payload["sub"])
+        except ValueError:
+            return None
+    return None

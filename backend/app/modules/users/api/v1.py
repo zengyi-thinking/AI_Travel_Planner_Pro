@@ -1,98 +1,146 @@
 """
-Users API Routes (v1)
+User API Routes
 
-This module contains all authentication and user management API endpoints.
+This module defines FastAPI routes for user operations.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import HTTPBearer
+from sqlalchemy.orm import Session
 from app.core.db.session import get_db
-from app.core.security.deps import get_current_user, get_current_active_user
-from app.core.security.jwt import create_access_token
+from app.core.security.deps import get_current_user
+from app.modules.users.services.user_service import UserService
 from app.modules.users.schemas.user import (
     UserCreate,
-    UserResponse,
+    UserLogin,
     UserUpdate,
-    UserLogin
+    UserResponse,
+    LoginResponse,
+    RegisterResponse,
+    PasswordChange
 )
-from app.modules.users.schemas.auth import TokenResponse
-from app.modules.users.services.user_service import UserService
+from app.modules.users.models.user import User
+from app.core.config import settings
 
 router = APIRouter()
+security = HTTPBearer()
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
-    Register a new user account.
+    Register a new user
     """
-    user_service = UserService(db)
-    user = await user_service.create_user(user_data)
-    return user
+    try:
+        user_service = UserService(db)
+        user, access_token = user_service.register_user(
+            email=user_data.email,
+            password=user_data.password,
+            name=user_data.name
+        )
+        
+        return RegisterResponse(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user)
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(
     login_data: UserLogin,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """
-    Authenticate user and return access token.
+    Authenticate user and return access token
     """
     user_service = UserService(db)
-    user = await user_service.authenticate_user(
+    result = user_service.authenticate_user(
         email=login_data.email,
         password=login_data.password
     )
-
-    if not user:
+    
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-
-    access_token = create_access_token(subject=user.id)
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user
-    }
+    
+    user, access_token = result
+    
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(user)
+    )
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Get current user information.
+    Get current user information
     """
-    return current_user
+    return UserResponse.model_validate(current_user)
 
 
 @router.put("/me", response_model=UserResponse)
 async def update_current_user(
     user_data: UserUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Update current user information.
+    Update current user information
     """
     user_service = UserService(db)
-    updated_user = await user_service.update_user(current_user.id, user_data)
-    return updated_user
+    updated_user = user_service.update_user(
+        user_id=current_user.id,
+        name=user_data.name
+    )
+    
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return UserResponse.model_validate(updated_user)
 
 
-@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_current_user(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+@router.post("/change-password")
+async def change_password(
+    password_data: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Delete current user account.
+    Change user password
     """
     user_service = UserService(db)
-    await user_service.delete_user(current_user.id)
+    
+    try:
+        user_service.change_password(
+            user_id=current_user.id,
+            old_password=password_data.old_password,
+            new_password=password_data.new_password
+        )
+        
+        return {"message": "Password changed successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

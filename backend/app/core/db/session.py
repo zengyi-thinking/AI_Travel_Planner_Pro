@@ -5,6 +5,18 @@ This module manages database connections and session creation.
 It uses SQLAlchemy's async capabilities for high performance.
 """
 
+import os
+from pathlib import Path
+
+# Load .env file if exists
+env_file = Path(__file__).parent.parent.parent.parent / '.env'
+if env_file.exists():
+    with open(env_file, 'r') as f:
+        for line in f:
+            if '=' in line and not line.strip().startswith('#'):
+                key, value = line.strip().split('=', 1)
+                os.environ[key] = value
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.core.config import settings

@@ -1,7 +1,7 @@
 """
 User Schemas
 
-This module contains Pydantic models for user-related data validation.
+This module defines Pydantic models for user API requests and responses.
 """
 
 from pydantic import BaseModel, EmailStr, Field
@@ -9,50 +9,73 @@ from typing import Optional
 from datetime import datetime
 
 
+# Base user schema
 class UserBase(BaseModel):
-    """
-    Base user schema with common fields.
-    """
+    """Base user schema"""
     email: EmailStr
     name: str = Field(..., min_length=1, max_length=100)
-    phone: Optional[str] = Field(None, max_length=20)
-    avatar_url: Optional[str] = Field(None, max_length=500)
+    membership_level: str = Field(default='free')
 
 
+# User creation schema
 class UserCreate(UserBase):
-    """
-    Schema for user creation.
-    """
+    """Schema for user registration"""
     password: str = Field(..., min_length=6, max_length=128)
 
 
-class UserUpdate(BaseModel):
-    """
-    Schema for user updates.
-    """
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    phone: Optional[str] = Field(None, max_length=20)
-    avatar_url: Optional[str] = Field(None, max_length=500)
-
-
+# User login schema
 class UserLogin(BaseModel):
-    """
-    Schema for user login.
-    """
+    """Schema for user login"""
     email: EmailStr
     password: str
 
 
+# User update schema
+class UserUpdate(BaseModel):
+    """Schema for user update"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+
+
+# User response schema
 class UserResponse(UserBase):
-    """
-    Schema for user response (without sensitive data).
-    """
+    """Schema for user response"""
     id: int
-    status: str
-    email_verified: bool
-    last_login_at: Optional[datetime]
+    is_active: bool
     created_at: datetime
     updated_at: datetime
-
+    
     class Config:
         from_attributes = True
+
+
+# Token response schema
+class Token(BaseModel):
+    """Schema for token response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+# Login response schema
+class LoginResponse(BaseModel):
+    """Schema for login response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+
+
+# Register response schema
+class RegisterResponse(BaseModel):
+    """Schema for register response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+
+
+# Password change schema
+class PasswordChange(BaseModel):
+    """Schema for password change"""
+    old_password: str
+    new_password: str = Field(..., min_length=6, max_length=128)

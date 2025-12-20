@@ -26,24 +26,27 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = ["*"]
 
     # Database Configuration
-    DATABASE_URL: str = "mysql+aiomysql://user:password@localhost:3306/wanderflow"
-    MYSQL_HOST: str = "localhost"
-    MYSQL_PORT: int = 3306
-    MYSQL_USER: str = "user"
-    MYSQL_PASSWORD: str = "password"
-    MYSQL_DB: str = "wanderflow"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_USER: str = "root"
+    DB_PASSWORD: str = "password"
+    DB_NAME: str = "wanderflow_db"
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        """Get async database URL"""
+        return f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    # JWT Configuration
+    SECRET_KEY: str = "your-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Redis Configuration
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
-
-    # JWT Configuration
-    SECRET_KEY: str = "your-secret-key-change-in-production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # AI Configuration
     OPENAI_API_KEY: Optional[str] = None
@@ -89,6 +92,9 @@ class Settings(BaseSettings):
     # Caching Configuration
     CACHE_TTL: int = 3600  # 1 hour
     CACHE_MAX_SIZE: int = 10000
+
+    # CORS Configuration
+    ALLOWED_ORIGINS: List[str] = ["*"]
 
     class Config:
         env_file = ".env"

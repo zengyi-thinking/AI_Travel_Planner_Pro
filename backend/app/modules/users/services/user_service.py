@@ -1,94 +1,168 @@
 """
 User Service
 
-This module contains business logic for user operations.
+This module provides business logic for user operations.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.modules.users.daos.user_dao import UserDAO
-from app.modules.users.schemas.user import UserCreate, UserUpdate, UserResponse
-from app.common.exceptions.base import NotFoundException
 from typing import Optional
-
-import logging
-
-logger = logging.getLogger(__name__)
+from sqlalchemy.orm import Session
+from app.core.security.password import hash_password, verify_password
+from app.core.security.jwt import create_access_token
+from app.modules.users.models.user import User
+from app.modules.users.daos.user_dao import UserDAO
 
 
 class UserService:
     """
-    Service class for user business logic.
+    User business logic service
     """
-
-    def __init__(self, db_session: AsyncSession):
-        self.user_dao = UserDAO(db_session)
-
-    async def create_user(self, user_data: UserCreate) -> UserResponse:
+    
+    def __init__(self, db: Session):
         """
-        Create a new user.
-
+        Initialize UserService
+        
         Args:
-            user_data: User creation data
-
-        Returns:
-            Created user response
+            db: Database session
         """
-        user = await self.user_dao.create_user(user_data.dict())
-        return UserResponse.from_orm(user)
-
-    async def get_user_by_id(self, user_id: int) -> UserResponse:
+        self.db = db
+        self.user_dao = UserDAO(db)
+    
+    def register_user(
+        self,
+        email: str,
+        password: str,
+        name: str
+    ) -> tuple[User, str]:
         """
-        Get user by ID.
-
-        Args:
-            user_id: User ID
-
-        Returns:
-            User response
-
-        Raises:
-            NotFoundException: If user not found
-        """
-        user = await self.user_dao.get_by_id(user_id)
-        if not user:
-            raise NotFoundException("User not found")
-        return UserResponse.from_orm(user)
-
-    async def update_user(self, user_id: int, user_data: UserUpdate) -> UserResponse:
-        """
-        Update user information.
-
-        Args:
-            user_id: User ID
-            user_data: Updated user data
-
-        Returns:
-            Updated user response
-        """
-        user = await self.user_dao.update_user(user_id, user_data.dict(exclude_unset=True))
-        return UserResponse.from_orm(user)
-
-    async def delete_user(self, user_id: int) -> None:
-        """
-        Delete user.
-
-        Args:
-            user_id: User ID
-        """
-        await self.user_dao.delete_user(user_id)
-
-    async def authenticate_user(self, email: str, password: str) -> Optional[UserResponse]:
-        """
-        Authenticate user.
-
+        Register a new user
+        
         Args:
             email: User email
-            password: Plain password
-
+            password: User password
+            name: User name
+            
         Returns:
-            User response if authenticated, None otherwise
+            Tuple of (user, access_token)
+            
+        Raises:
+            ValueError: If email already exists
         """
-        user = await self.user_dao.authenticate_user(email, password)
-        if user:
-            return UserResponse.from_orm(user)
-        return None
+        # Check if email exists
+        if self.user_dao.email_exists(email):
+            raise ValueError("Email already registered")
+        
+        # Create user
+        hashed_pwd = hash_password(password)
+        user = User(
+            email=email,
+            hashed_password=hashed_pwd,
+            name=name,
+            is_active=True,
+            membership_level='free'
+        )
+        
+        user = self.user_dao.create(user)
+        
+        # Create access token
+        access_token = create_access_token(subject=str(user.id))
+        
+        return user, access_token
+    
+    def authenticate_user(
+        self,
+        email: str,
+        password: str
+    ) -> Optional[tuple[User, str]]:
+        """
+        Authenticate user with email and password
+        
+        Args:
+            email: User email
+            password: User password
+            
+        Returns:
+            Tuple of (user, access_token) or None if authentication fails
+        """
+        # Get user by email
+        user = self.user_dao.get_by_email(email)
+        
+        if not user:
+            return None
+        
+        # Verify password
+        if not verify_password(password, user.hashed_password):
+            return None
+        
+        # Create access token
+        access_token = create_access_token(subject=str(user.id))
+        
+        return user, access_token
+    
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """
+        Get user by ID
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            User object or None
+        """
+        return self.user_dao.get_by_id(user_id)
+    
+    def update_user(
+        self,
+        user_id: int,
+        **kwargs
+    ) -> Optional[User]:
+        """
+        Update user
+        
+        Args:
+            user_id: User ID
+            **kwargs: Fields to update
+            
+        Returns:
+            Updated user object or None
+        """
+        # Remove sensitive fields from kwargs
+        sensitive_fields = ['id', 'hashed_password', 'email', 'created_at']
+        for field in sensitive_fields:
+            kwargs.pop(field, None)
+        
+        return self.user_dao.update(user_id, **kwargs)
+    
+    def change_password(
+        self,
+        user_id: int,
+        old_password: str,
+        new_password: str
+    ) -> bool:
+        """
+        Change user password
+        
+        Args:
+            user_id: User ID
+            old_password: Current password
+            new_password: New password
+            
+        Returns:
+            True if password changed, False otherwise
+            
+        Raises:
+            ValueError: If old password is incorrect
+        """
+        user = self.user_dao.get_by_id(user_id)
+        
+        if not user:
+            return False
+        
+        # Verify old password
+        if not verify_password(old_password, user.hashed_password):
+            raise ValueError("Incorrect password")
+        
+        # Update password
+        hashed_new_pwd = hash_password(new_password)
+        self.user_dao.update(user_id, hashed_password=hashed_new_pwd)
+        
+        return True

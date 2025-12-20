@@ -1,130 +1,79 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-slate-200 px-8 py-4">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center gap-2 text-teal-500">
-          <i class="fas fa-paper-plane text-2xl"></i>
-          <span class="font-bold text-xl">WanderFlow</span>
-        </div>
-        <div class="flex gap-4">
-          <router-link to="/qa" class="text-slate-600 hover:text-teal-500">AI 助手</router-link>
-          <router-link to="/copywriter" class="text-slate-600 hover:text-teal-500">文案生成</router-link>
-          <router-link to="/settings" class="text-slate-600 hover:text-teal-500">设置</router-link>
-        </div>
-      </div>
-    </nav>
+  <div class="bg-[#F8FAFC] h-screen flex overflow-hidden">
+    <PlannerSidebar />
 
-    <!-- Main Content -->
-    <div class="max-w-4xl mx-auto p-8">
-      <h1 class="text-3xl font-bold text-slate-800 mb-8">我的新旅程</h1>
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+      <PlannerHeader />
 
-      <!-- Itinerary Form -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <h2 class="text-xl font-bold text-slate-700 mb-4">旅程设定</h2>
+      <div class="flex-1 overflow-y-auto p-8 relative">
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-50 rounded-full filter blur-[100px] -z-10 pointer-events-none"></div>
 
-        <form class="space-y-4">
-          <div>
-            <label class="block text-sm font-semibold text-slate-600 mb-2">目的地</label>
-            <input
-              type="text"
-              v-model="destination"
-              class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-              placeholder="例如：京都, 日本"
-            >
+        <div class="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div class="lg:col-span-1 space-y-6">
+            <ItineraryForm
+              :destination="destination"
+              :days="days"
+              :budget="budget"
+              :travel-style="travelStyle"
+              @update:destination="destination = $event"
+              @update:days="days = $event"
+              @update:budget="budget = $event"
+              @update:travelStyle="travelStyle = $event"
+              @generate="generateItinerary"
+            />
+
+            <InspirationCard class="fade-in-up" />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-semibold text-slate-600 mb-2">天数</label>
-              <input
-                type="number"
-                v-model="days"
-                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="5"
-              >
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-slate-600 mb-2">预算 (¥)</label>
-              <input
-                type="number"
-                v-model="budget"
-                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="5000"
-              >
-            </div>
+          <div class="lg:col-span-2 flex flex-col gap-6">
+            <MapPreview />
+
+            <ItineraryCard v-if="generatedItinerary" :itinerary="generatedItinerary" />
+            <EmptyStateCard v-else />
           </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-slate-600 mb-2">旅行风格</label>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="travelStyle = 'leisure'"
-                :class="travelStyle === 'leisure' ? 'bg-teal-100 border-teal-500 text-teal-700' : 'bg-white border-slate-200 text-slate-600'"
-                class="px-4 py-2 rounded-lg border transition-colors"
-              >
-                🧘 休闲放松
-              </button>
-              <button
-                type="button"
-                @click="travelStyle = 'adventure'"
-                :class="travelStyle === 'adventure' ? 'bg-teal-100 border-teal-500 text-teal-700' : 'bg-white border-slate-200 text-slate-600'"
-                class="px-4 py-2 rounded-lg border transition-colors"
-              >
-                📸 特种兵打卡
-              </button>
-              <button
-                type="button"
-                @click="travelStyle = 'foodie'"
-                :class="travelStyle === 'foodie' ? 'bg-teal-100 border-teal-500 text-teal-700' : 'bg-white border-slate-200 text-slate-600'"
-                class="px-4 py-2 rounded-lg border transition-colors"
-              >
-                🍜 美食探索
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            @click="generateItinerary"
-            class="w-full bg-gradient-to-r from-teal-400 to-blue-500 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all"
-          >
-            <i class="fas fa-magic mr-2"></i> AI 生成行程
-          </button>
-        </form>
-      </div>
-
-      <!-- Generated Itinerary -->
-      <div v-if="generatedItinerary" class="bg-white rounded-2xl shadow-lg p-6">
-        <h2 class="text-xl font-bold text-slate-700 mb-4">{{ generatedItinerary.title }}</h2>
-        <div class="space-y-4">
-          <p class="text-slate-600">目的地：{{ generatedItinerary.destination }}</p>
-          <p class="text-slate-600">天数：{{ generatedItinerary.days }}天</p>
-          <p class="text-slate-600">预算：¥{{ generatedItinerary.budget }}</p>
-          <p class="text-slate-600">风格：{{ generatedItinerary.travelStyle }}</p>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import ItineraryForm from '@/components/planner/ItineraryForm.vue'
+import ItineraryCard from '@/components/planner/ItineraryCard.vue'
+import PlannerSidebar from '@/components/planner/PlannerSidebar.vue'
+import MapPreview from '@/components/planner/MapPreview.vue'
+import PlannerHeader from '@/components/planner/PlannerHeader.vue'
+import InspirationCard from '@/components/planner/InspirationCard.vue'
+import EmptyStateCard from '@/components/planner/EmptyStateCard.vue'
 
 const destination = ref('')
 const days = ref(3)
 const budget = ref(5000)
 const travelStyle = ref('leisure')
-const generatedItinerary = ref(null)
+const generatedItinerary = ref<null | {
+  title: string
+  summary: string
+  destination: string
+  days: number
+  budget: number
+  styleLabel: string
+}>(null)
+
+const styleLabelMap: Record<string, string> = {
+  leisure: '休闲放松',
+  adventure: '特种兵打卡',
+  foodie: '美食探索'
+}
 
 const generateItinerary = () => {
   generatedItinerary.value = {
     title: `${destination.value} ${days.value}日游`,
+    summary: '行程已生成，点击右上角导出或继续调整参数优化线路。',
     destination: destination.value,
     days: days.value,
     budget: budget.value,
-    travelStyle: travelStyle.value
+    styleLabel: styleLabelMap[travelStyle.value] || travelStyle.value
   }
 }
 </script>
