@@ -1,0 +1,1 @@
+# Copywriter templates initialization

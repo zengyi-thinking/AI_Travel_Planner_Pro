@@ -1,0 +1,1 @@
+# QA schemas initialization

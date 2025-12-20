@@ -1,0 +1,1 @@
+# Copywriter DAOs initialization
