@@ -1,0 +1,20 @@
+/* Basic global styles to satisfy Vite import and provide sane defaults. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
