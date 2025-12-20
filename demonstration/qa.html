@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 助手 - WanderFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#F8FAFC] h-screen flex overflow-hidden">
+
+  <aside class="w-64 bg-white border-r border-slate-100 flex flex-col z-20 shadow-sm flex-shrink-0">
+    <div class="p-6 flex items-center gap-2 text-teal-500">
+      <i class="fas fa-paper-plane text-2xl"></i>
+      <span class="font-bold text-xl text-slate-800">WanderFlow</span>
+    </div>
+    <nav class="flex-1 px-4 space-y-2 mt-4">
+      <a href="planner.html" class="nav-item"> <i class="fas fa-map w-6"></i> 规划行程 </a>
+      <a href="#" class="nav-item active"> <i class="fas fa-comment-dots w-6"></i> AI 助手 </a>
+      <a href="copywriter.html" class="nav-item"> <i class="fas fa-pen-nib w-6"></i> 文案生成 </a>
+      <a href="settings.html" class="nav-item"> <i class="fas fa-cog w-6"></i> 账户设置 </a>
+    </nav>
+    <div class="p-4 border-t border-slate-100">
+      <div class="bg-teal-50 rounded-xl p-4">
+        <h4 class="text-sm font-bold text-teal-800 mb-1">对话模式</h4>
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center gap-2 text-slate-600">
+            <i class="fas fa-circle text-[8px] text-green-500"></i>
+            <span>智能对话</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-600">
+            <i class="fas fa-circle text-[8px] text-blue-500"></i>
+            <span>知识库问答</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-600">
+            <i class="fas fa-circle text-[8px] text-yellow-500"></i>
+            <span>天气查询</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-600">
+            <i class="fas fa-circle text-[8px] text-purple-500"></i>
+            <span>语音对话</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col relative bg-slate-50">
+
+    <header class="h-16 bg-white/80 backdrop-blur border-b border-slate-100 flex justify-between items-center px-6 z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <h2 class="text-lg font-bold text-slate-700">WanderBot 智能向导</h2>
+        <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">在线</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="knowledgeToggle" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors">
+          <i class="fas fa-database mr-1"></i>知识库: OFF
+        </button>
+        <button id="weatherToggle" class="text-xs bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full hover:bg-yellow-200 transition-colors">
+          <i class="fas fa-cloud-sun mr-1"></i>天气: OFF
+        </button>
+        <button id="voiceToggle" class="text-xs bg-purple-100 text-purple-600 px-3 py-1 rounded-full hover:bg-purple-200 transition-colors">
+          <i class="fas fa-microphone mr-1"></i>语音: OFF
+        </button>
+        <button class="text-slate-400 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-6" id="chatContainer">
+
+      <div class="flex justify-center fade-in-up">
+        <div class="glass-card p-6 max-w-2xl text-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg float-anim">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2">嗨，我是您的全能旅行助理！</h3>
+          <p class="text-slate-500 text-sm mb-6">我可以帮您：</p>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <button class="quick-question bg-white border border-slate-200 p-3 rounded-xl hover:border-teal-400 hover:text-teal-600 transition-colors text-left" data-question="查询北京未来3天的天气">
+              <i class="fas fa-cloud-sun text-yellow-500 mr-2"></i>🌤️ 查询目的地天气
+            </button>
+            <button class="quick-question bg-white border border-slate-200 p-3 rounded-xl hover:border-teal-400 hover:text-teal-600 transition-colors text-left" data-question="帮我制定一个3天上海旅行计划">
+              <i class="fas fa-map-marked-alt text-green-500 mr-2"></i>📍 制定旅行计划
+            </button>
+            <button class="quick-question bg-white border border-slate-200 p-3 rounded-xl hover:border-teal-400 hover:text-teal-600 transition-colors text-left" data-question="泰国签证办理需要哪些材料？">
+              <i class="fas fa-passport text-blue-500 mr-2"></i>📋 签证政策咨询
+            </button>
+            <button class="quick-question bg-white border border-slate-200 p-3 rounded-xl hover:border-teal-400 hover:text-teal-600 transition-colors text-left" data-question="播放刚才的回复">
+              <i class="fas fa-volume-up text-purple-500 mr-2"></i>🔊 语音播放回复
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="p-6 bg-white border-t border-slate-100">
+      <div class="max-w-4xl mx-auto">
+        <div id="weatherPanel" class="hidden mb-4 glass-card p-4 rounded-xl">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <input type="text" id="weatherInput" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-teal-400" placeholder="输入城市名，如：北京、上海">
+            </div>
+            <button id="weatherBtn" class="btn-primary px-6 py-2 text-sm">
+              <i class="fas fa-cloud-sun mr-1"></i>查询天气
+            </button>
+            <button id="weatherClose" class="text-slate-400 hover:text-slate-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="weatherResult" class="mt-4 hidden">
+            <div class="grid grid-cols-3 gap-4 text-sm"></div>
+          </div>
+        </div>
+
+        <div id="voicePanel" class="hidden mb-4 glass-card p-4 rounded-xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div id="voiceStatus" class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span class="text-sm text-slate-600" id="voiceStatusText">点击开始录音</span>
+            </div>
+            <div class="flex gap-2">
+              <button id="voiceRecordBtn" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors">
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button id="voiceStopBtn" class="bg-slate-500 hover:bg-slate-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors hidden">
+                <i class="fas fa-stop"></i>
+              </button>
+              <button id="voicePlayBtn" class="bg-green-500 hover:bg-green-600 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors hidden">
+                <i class="fas fa-play"></i>
+              </button>
+              <button id="voiceClose" class="text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div id="voiceText" class="mt-3 text-sm text-slate-600 hidden"></div>
+        </div>
+
+        <div class="relative">
+          <input type="text" id="chatInput" class="w-full bg-slate-50 border-2 border-slate-200 rounded-full py-4 pl-6 pr-24 focus:outline-none focus:border-teal-400 focus:bg-white transition-all shadow-inner" placeholder="输入您的问题...">
+          <button id="sendBtn" class="absolute right-2 top-2 w-10 h-10 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <div class="flex justify-center mt-3">
+          <div class="flex gap-2 text-xs text-slate-400">
+            <span><i class="fas fa-magic mr-1"></i>Shift + Enter 换行</span>
+            <span>|</span>
+            <span><i class="fas fa-keyboard mr-1"></i>Enter 发送</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // 全局状态
+    let chatHistory = [];
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let knowledgeBaseEnabled = false;
+    let weatherEnabled = false;
+    let voiceEnabled = false;
+
+    // DOM 元素
+    const chatContainer = document.getElementById('chatContainer');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const knowledgeToggle = document.getElementById('knowledgeToggle');
+    const weatherToggle = document.getElementById('weatherToggle');
+    const voiceToggle = document.getElementById('voiceToggle');
+    const weatherPanel = document.getElementById('weatherPanel');
+    const voicePanel = document.getElementById('voicePanel');
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      setupEventListeners();
+      addWelcomeMessage();
+    });
+
+    function setupEventListeners() {
+      // 发送消息
+      sendBtn.addEventListener('click', sendMessage);
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // 功能开关
+      knowledgeToggle.addEventListener('click', toggleKnowledgeBase);
+      weatherToggle.addEventListener('click', toggleWeather);
+      voiceToggle.addEventListener('click', toggleVoice);
+
+      // 天气面板
+      document.getElementById('weatherBtn').addEventListener('click', queryWeather);
+      document.getElementById('weatherClose').addEventListener('click', () => {
+        weatherPanel.classList.add('hidden');
+        weatherToggle.classList.remove('bg-yellow-200');
+        weatherToggle.classList.add('bg-yellow-100');
+        weatherToggle.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>天气: OFF';
+      });
+
+      // 语音面板
+      document.getElementById('voiceRecordBtn').addEventListener('click', toggleRecording);
+      document.getElementById('voiceStopBtn').addEventListener('click', stopRecording);
+      document.getElementById('voicePlayBtn').addEventListener('click', playVoiceResponse);
+      document.getElementById('voiceClose').addEventListener('click', () => {
+        voicePanel.classList.add('hidden');
+        voiceToggle.classList.remove('bg-purple-200');
+        voiceToggle.classList.add('bg-purple-100');
+        voiceToggle.innerHTML = '<i class="fas fa-microphone mr-1"></i>语音: OFF';
+      });
+
+      // 快捷问题
+      document.querySelectorAll('.quick-question').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const question = btn.getAttribute('data-question');
+          chatInput.value = question;
+          sendMessage();
+        });
+      });
+    }
+
+    function addWelcomeMessage() {
+      const welcomeDiv = document.createElement('div');
+      welcomeDiv.className = 'flex gap-4 fade-in-up';
+      welcomeDiv.innerHTML = `
+        <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center text-white shadow-sm">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="bg-teal-50 border border-teal-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-xl text-slate-700">
+          <p>您好！我是WanderBot，您的AI旅行助理。我可以为您提供以下服务：</p>
+          <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+            <li><strong>智能对话</strong>：回答旅行相关问题</li>
+            <li><strong>知识库问答</strong>：基于旅游攻略的专业解答（需开启）</li>
+            <li><strong>天气查询</strong>：实时天气信息和预报（需开启）</li>
+            <li><strong>语音交互</strong>：语音输入和语音播报（需开启）</li>
+          </ul>
+          <p class="mt-2 text-sm">请选择您需要的功能，或直接向我提问！</p>
+        </div>
+      `;
+      chatContainer.appendChild(welcomeDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function toggleKnowledgeBase() {
+      knowledgeBaseEnabled = !knowledgeBaseEnabled;
+      if (knowledgeBaseEnabled) {
+        knowledgeToggle.classList.remove('bg-blue-100', 'text-blue-600');
+        knowledgeToggle.classList.add('bg-blue-200', 'text-blue-700');
+        knowledgeToggle.innerHTML = '<i class="fas fa-database mr-1"></i>知识库: ON';
+        showBotMessage('✅ 已开启知识库问答！<br><small>我将基于旅游攻略文档为您提供更专业的回答。</small>');
+      } else {
+        knowledgeToggle.classList.remove('bg-blue-200', 'text-blue-700');
+        knowledgeToggle.classList.add('bg-blue-100', 'text-blue-600');
+        knowledgeToggle.innerHTML = '<i class="fas fa-database mr-1"></i>知识库: OFF';
+        showBotMessage('ℹ️ 已关闭知识库问答。');
+      }
+    }
+
+    function toggleWeather() {
+      weatherEnabled = !weatherEnabled;
+      if (weatherEnabled) {
+        weatherToggle.classList.remove('bg-yellow-100', 'text-yellow-600');
+        weatherToggle.classList.add('bg-yellow-200', 'text-yellow-700');
+        weatherToggle.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>天气: ON';
+        weatherPanel.classList.remove('hidden');
+        showBotMessage('✅ 已开启天气查询功能！<br><small>您可以查询任何城市的天气信息。</small>');
+      } else {
+        weatherToggle.classList.remove('bg-yellow-200', 'text-yellow-700');
+        weatherToggle.classList.add('bg-yellow-100', 'text-yellow-600');
+        weatherToggle.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>天气: OFF';
+        weatherPanel.classList.add('hidden');
+        showBotMessage('ℹ️ 已关闭天气查询功能。');
+      }
+    }
+
+    function toggleVoice() {
+      voiceEnabled = !voiceEnabled;
+      if (voiceEnabled) {
+        voiceToggle.classList.remove('bg-purple-100', 'text-purple-600');
+        voiceToggle.classList.add('bg-purple-200', 'text-purple-700');
+        voiceToggle.innerHTML = '<i class="fas fa-microphone mr-1"></i>语音: ON';
+        voicePanel.classList.remove('hidden');
+        showBotMessage('✅ 已开启语音对话功能！<br><small>您可以使用语音与我交流，我会用语音回复您。</small>');
+      } else {
+        voiceToggle.classList.remove('bg-purple-200', 'text-purple-700');
+        voiceToggle.classList.add('bg-purple-100', 'text-purple-600');
+        voiceToggle.innerHTML = '<i class="fas fa-microphone mr-1"></i>语音: OFF';
+        voicePanel.classList.add('hidden');
+        showBotMessage('ℹ️ 已关闭语音对话功能。');
+      }
+    }
+
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      chatInput.value = '';
+      addUserMessage(message);
+
+      if (voiceEnabled) {
+        speakText(message);
+      }
+
+      // 模拟 API 调用
+      setTimeout(() => {
+        let response = generateResponse(message);
+        addBotMessage(response);
+
+        if (voiceEnabled) {
+          speakText(response);
+        }
+      }, 800);
+    }
+
+    function addUserMessage(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'flex gap-4 flex-row-reverse fade-in-up';
+      messageDiv.innerHTML = `
+        <img src="https://i.pravatar.cc/100?img=12" class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+        <div class="bg-white p-4 rounded-2xl rounded-tr-none shadow-sm max-w-xl text-slate-700">
+          ${message}
+        </div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function addBotMessage(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'flex gap-4 fade-in-up';
+      messageDiv.innerHTML = `
+        <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center text-white shadow-sm">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="bg-teal-50 border border-teal-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-xl text-slate-700">
+          ${message}
+        </div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function showBotMessage(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'flex gap-4 fade-in-up';
+      messageDiv.innerHTML = `
+        <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center text-white shadow-sm">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="bg-teal-50 border border-teal-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-xl text-slate-700">
+          ${message}
+        </div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function generateResponse(message) {
+      const lowerMessage = message.toLowerCase();
+
+      // 天气查询
+      if (lowerMessage.includes('天气') || lowerMessage.includes('weather')) {
+        return `
+          <strong>🌤️ 天气查询功能已开启</strong><br>
+          请在上方的天气面板中输入城市名，我将为您查询详细的天气信息，包括：
+          <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+            <li>未来3天天气预报</li>
+            <li>温度、湿度、风力</li>
+            <li>紫外线指数</li>
+            <li>出行建议</li>
+          </ul>
+        `;
+      }
+
+      // 知识库相关
+      if (lowerMessage.includes('知识库') || lowerMessage.includes('攻略') || lowerMessage.includes('文档')) {
+        return `
+          <strong>📚 知识库问答说明</strong><br>
+          我的知识库包含了全国各城市的详细旅游攻略，包括：
+          <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+            <li>景点推荐和介绍</li>
+            <li>美食和住宿</li>
+            <li>交通指南</li>
+            <li>文化习俗和注意事项</li>
+          </ul>
+          请开启知识库功能，然后直接向我提问！
+        `;
+      }
+
+      // 语音功能
+      if (lowerMessage.includes('语音') || lowerMessage.includes('说话') || lowerMessage.includes('声音')) {
+        return `
+          <strong>🎤 语音对话功能说明</strong><br>
+          开启语音功能后，您可以：
+          <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+            <li>点击麦克风按钮进行语音输入</li>
+            <li>我将以文字形式回复</li>
+            <li>点击播放按钮听语音播报</li>
+          </ul>
+          语音识别支持普通话，反应速度很快哦！
+        `;
+      }
+
+      // 签证相关
+      if (lowerMessage.includes('签证') || lowerMessage.includes('免签')) {
+        return `
+          <strong>📋 签证政策信息</strong><br>
+          <p class="mb-2">热门目的地签证政策：</p>
+          <div class="bg-white p-3 rounded-lg text-sm space-y-2">
+            <div><strong>🇹🇭 泰国</strong>：2024年3月起永久免签</div>
+            <div><strong>🇸🇬 新加坡</strong>：30天免签</div>
+            <div><strong>🇲🇾 马来西亚</strong>：30天免签</div>
+            <div><strong>🇯🇵 日本</strong>：需要签证</div>
+            <div><strong>🇰🇷 韩国</strong>：需要签证</div>
+          </div>
+          <p class="text-xs mt-2 text-slate-500">*政策可能随时变化，请以最新官方信息为准</p>
+        `;
+      }
+
+      // 美食相关
+      if (lowerMessage.includes('美食') || lowerMessage.includes('餐厅') || lowerMessage.includes('小吃')) {
+        const cities = ['北京', '上海', '广州', '深圳', '成都', '杭州', '西安', '重庆'];
+        const randomCity = cities[Math.floor(Math.random() * cities.length)];
+        return `
+          <strong>🍜 ${randomCity}美食推荐</strong><br>
+          <p class="mb-2">${randomCity}必吃美食：</p>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div class="bg-white p-2 rounded">🥟 特色小吃</div>
+            <div class="bg-white p-2 rounded">🍲 当地菜系</div>
+            <div class="bg-white p-2 rounded">🍜 网红餐厅</div>
+            <div class="bg-white p-2 rounded">☕ 休闲咖啡厅</div>
+          </div>
+          <p class="text-xs mt-2 text-slate-500">需要更详细的推荐？告诉我您的具体需求和预算！</p>
+        `;
+      }
+
+      // 默认回复
+      const responses = [
+        {
+          q: ['你好', 'hello', 'hi', '嗨'],
+          a: `
+            <strong>👋 您好！</strong><br>
+            很高兴为您服务！我是WanderBot，您的AI旅行助理。<br>
+            您可以问我关于旅行的任何问题，我会尽力帮助您！
+          `
+        },
+        {
+          q: ['谢谢', '感谢'],
+          a: `
+            <strong>😊 不客气！</strong><br>
+            能帮助到您我很开心！如果还有其他问题，随时找我哦～
+          `
+        },
+        {
+          q: ['规划', '行程', '计划'],
+          a: `
+            <strong>📍 行程规划</strong><br>
+            我可以帮您制定详细的旅行计划！<br>
+            请告诉我：
+            <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+              <li>出发地和目的地</li>
+              <li>旅行天数</li>
+              <li>预算范围</li>
+              <li>旅行风格（紧凑/适中/休闲）</li>
+              <li>特殊偏好</li>
+            </ul>
+          `
+        }
+      ];
+
+      for (let resp of responses) {
+        for (let keyword of resp.q) {
+          if (lowerMessage.includes(keyword)) {
+            return resp.a;
+          }
+        }
+      }
+
+      return `
+        <strong>💬 收到您的问题</strong><br>
+        我正在思考如何最好地回答您的问题...<br><br>
+        <div class="text-sm">
+          <p><strong>您可以问我：</strong></p>
+          <ul class="list-disc list-inside space-y-1 mt-1">
+            <li>"北京有什么好玩的地方？"</li>
+            <li>"去日本旅游需要准备什么？"</li>
+            <li>"上海三日游行程规划"</li>
+            <li>"查询巴黎的天气"</li>
+          </ul>
+        </div>
+        <div class="mt-3 p-3 bg-blue-50 rounded-lg text-xs">
+          <strong>💡 提示：</strong> 开启右上角的功能开关可以获得更专业的服务！
+        </div>
+      `;
+    }
+
+    async function queryWeather() {
+      const city = document.getElementById('weatherInput').value.trim();
+      if (!city) {
+        alert('请输入城市名');
+        return;
+      }
+
+      const weatherResult = document.getElementById('weatherResult');
+      const weatherGrid = weatherResult.querySelector('.grid');
+      weatherGrid.innerHTML = '<div class="col-span-3 text-center py-4 text-slate-500">查询中...</div>';
+      weatherResult.classList.remove('hidden');
+
+      // 模拟天气 API 调用
+      setTimeout(() => {
+        const mockWeather = generateMockWeather(city);
+        weatherGrid.innerHTML = mockWeather;
+      }, 1000);
+    }
+
+    function generateMockWeather(city) {
+      const weathers = ['☀️ 晴', '⛅ 多云', '🌧️ 雨', '⛈️ 雷阵雨', '🌫️ 雾'];
+      const randomWeather = weathers[Math.floor(Math.random() * weathers.length)];
+
+      return `
+        <div class="col-span-3 mb-4 text-center">
+          <h4 class="text-lg font-bold text-slate-800">${city} - 未来3天天气预报</h4>
+        </div>
+        ${Array.from({length: 3}).map((_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() + i);
+          const dateStr = date.toLocaleDateString('zh-CN', {month: 'short', day: 'numeric'});
+          const tempHigh = 15 + Math.floor(Math.random() * 15);
+          const tempLow = 5 + Math.floor(Math.random() * 10);
+          const weather = weathers[Math.floor(Math.random() * weathers.length)];
+
+          return `
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <div class="text-center">
+                <div class="text-sm font-semibold text-slate-600">${dateStr}</div>
+                <div class="text-3xl my-2">${weather}</div>
+                <div class="text-xs text-slate-500">${getWeatherDesc(weather)}</div>
+                <div class="mt-3 flex justify-between text-sm">
+                  <span class="text-red-500 font-semibold">${tempHigh}°</span>
+                  <span class="text-slate-400">/</span>
+                  <span class="text-blue-500 font-semibold">${tempLow}°</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-500">
+                  <div>💧 湿度: ${50 + Math.floor(Math.random() * 30)}%</div>
+                  <div>🌬️ 风: ${Math.floor(Math.random() * 5)}级</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    function getWeatherDesc(weather) {
+      const descs = {
+        '☀️ 晴': '阳光明媚，适合出行',
+        '⛅ 多云': '天气舒适，注意防晒',
+        '🌧️ 雨': '记得带伞，注意防滑',
+        '⛈️ 雷阵雨': '注意安全，室内活动',
+        '🌫️ 雾': '能见度低，注意出行安全'
+      };
+      return descs[weather] || '出行请注意安全';
+    }
+
+    async function toggleRecording() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+            await processAudio(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+
+          document.getElementById('voiceRecordBtn').classList.add('hidden');
+          document.getElementById('voiceStopBtn').classList.remove('hidden');
+          document.getElementById('voiceStatus').classList.remove('bg-red-500');
+          document.getElementById('voiceStatus').classList.add('bg-green-500');
+          document.getElementById('voiceStatusText').textContent = '正在录音...';
+        } catch (err) {
+          alert('无法访问麦克风，请检查权限设置');
+          console.error('Error accessing microphone:', err);
+        }
+      } else {
+        stopRecording();
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+
+        document.getElementById('voiceRecordBtn').classList.remove('hidden');
+        document.getElementById('voiceStopBtn').classList.add('hidden');
+        document.getElementById('voiceStatus').classList.remove('bg-green-500');
+        document.getElementById('voiceStatus').classList.add('bg-red-500');
+        document.getElementById('voiceStatusText').textContent = '录音已停止';
+      }
+    }
+
+    async function processAudio(audioBlob) {
+      const voiceText = document.getElementById('voiceText');
+      voiceText.textContent = '识别中...';
+      voiceText.classList.remove('hidden');
+
+      // 模拟语音识别
+      setTimeout(() => {
+        const mockTranscription = '帮我查询一下北京的天气';
+        voiceText.textContent = `识别结果：${mockTranscription}`;
+
+        // 自动发送消息
+        chatInput.value = mockTranscription;
+        sendMessage();
+
+        // 显示播放按钮
+        document.getElementById('voicePlayBtn').classList.remove('hidden');
+      }, 1500);
+    }
+
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        // 尝试使用中文语音
+        const voices = speechSynthesis.getVoices();
+        const chineseVoice = voices.find(voice => voice.lang.includes('zh'));
+        if (chineseVoice) {
+          utterance.voice = chineseVoice;
+        }
+
+        speechSynthesis.speak(utterance);
+      }
+    }
+
+    function playVoiceResponse() {
+      // 获取最后一条机器人回复
+      const botMessages = chatContainer.querySelectorAll('.bg-teal-50');
+      if (botMessages.length > 0) {
+        const lastMessage = botMessages[botMessages.length - 1];
+        const text = lastMessage.textContent.trim();
+        speakText(text);
+      }
+    }
+  </script>
+</body>
+</html>

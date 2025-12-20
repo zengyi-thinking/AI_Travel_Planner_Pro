@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - WanderFlow</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="h-screen w-screen overflow-hidden flex items-center justify-center relative">
+
+  <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-teal-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob"></div>
+  <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000"></div>
+
+  <div class="glass-card w-[95%] max-w-[1100px] h-[85vh] flex overflow-hidden shadow-2xl relative z-10">
+    
+    <div class="hidden lg:flex w-1/2 relative bg-cover bg-center items-end p-12 overflow-hidden group" 
+         style="background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2021&q=80');">
+      
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+      
+      <div class="relative z-10 text-white transform transition-transform duration-500 group-hover:-translate-y-2">
+        <h2 class="text-4xl font-bold mb-4 font-heading">探索未知的世界</h2>
+        <p class="text-lg opacity-90 font-light">AI 智能规划，让每一次出发都充满惊喜。准备好开始你的旅程了吗？</p>
+        
+        <div class="mt-6 flex gap-3">
+          <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm border border-white/30">🏝️ 智能规划</span>
+          <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm border border-white/30">✈️ 一键预订</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-1/2 bg-white/60 p-8 md:p-12 flex flex-col relative">
+      
+      <div class="absolute top-8 left-8 flex items-center gap-2 text-teal-500">
+        <i class="fas fa-paper-plane text-2xl"></i>
+        <span class="font-bold text-xl tracking-wide text-slate-700">WanderFlow</span>
+      </div>
+
+      <div class="max-w-md mx-auto w-full fade-in-up mt-16" style="animation-delay: 0.1s;">
+        
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-slate-800 mb-2">欢迎回来! 👋</h1>
+          <p class="text-slate-500">请输入您的账号信息以继续</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+          <div class="input-icon-wrapper">
+            <i class="fas fa-envelope"></i>
+            <input type="email" class="input-field" placeholder="电子邮箱" required>
+          </div>
+          
+          <div class="input-icon-wrapper">
+            <i class="fas fa-lock"></i>
+            <input type="password" class="input-field" placeholder="密码" required>
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 text-slate-600 cursor-pointer">
+              <input type="checkbox" class="rounded text-teal-500 focus:ring-teal-500">
+              记住我
+            </label>
+            <a href="#" class="text-teal-600 hover:text-teal-700 font-medium transition-colors">忘记密码?</a>
+          </div>
+
+          <button type="button" onclick="login()" class="btn-primary w-full justify-center text-lg shadow-lg">
+            立即登录 <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </form>
+
+        <div class="mt-8 text-center">
+          <div class="relative mb-6">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+            <div class="relative flex justify-center text-sm"><span class="px-4 bg-white/0 text-slate-400 backdrop-blur-sm">或通过以下方式</span></div>
+          </div>
+          
+          <div class="flex justify-center gap-4">
+            <button class="w-12 h-12 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-green-500 hover:scale-110 transition-transform"><i class="fab fa-weixin text-xl"></i></button>
+            <button class="w-12 h-12 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-red-500 hover:scale-110 transition-transform"><i class="fab fa-google text-xl"></i></button>
+            <button class="w-12 h-12 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-blue-500 hover:scale-110 transition-transform"><i class="fab fa-qq text-xl"></i></button>
+          </div>
+        </div>
+
+        <p class="mt-8 text-center text-slate-600">
+          还没有账号? <a href="register.html" class="text-teal-600 font-bold hover:underline">免费注册</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      const btn = document.querySelector('.btn-primary');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+      setTimeout(() => {
+        window.location.href = 'planner.html';
+      }, 1500);
+    }
+  </script>
+  
+  <style>
+    /* 定义背景动画 */
+    @keyframes blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+    .animate-blob {
+      animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+  </style>
+</body>
+</html>

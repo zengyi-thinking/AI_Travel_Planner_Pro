@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行程规划 - WanderFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#F8FAFC] h-screen flex overflow-hidden">
+
+  <aside class="w-64 bg-white border-r border-slate-100 flex flex-col z-20 shadow-sm">
+    <div class="p-6 flex items-center gap-2 text-teal-500">
+      <i class="fas fa-paper-plane text-2xl"></i>
+      <span class="font-bold text-xl text-slate-800">WanderFlow</span>
+    </div>
+
+    <nav class="flex-1 px-4 space-y-2 mt-4">
+      <a href="#" class="nav-item active">
+        <i class="fas fa-map w-6"></i> 规划行程
+      </a>
+      <a href="qa.html" class="nav-item">
+        <i class="fas fa-comment-dots w-6"></i> AI 助手
+      </a>
+      <a href="copywriter.html" class="nav-item">
+        <i class="fas fa-pen-nib w-6"></i> 文案生成
+      </a>
+      <a href="#" class="nav-item">
+        <i class="fas fa-history w-6"></i> 历史记录
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-slate-100">
+      <div class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+        <img src="https://i.pravatar.cc/100?img=12" class="w-10 h-10 rounded-full">
+        <div>
+          <div class="text-sm font-bold text-slate-700">Alex Chen</div>
+          <div class="text-xs text-slate-400">Pro 用户</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col relative overflow-hidden">
+    
+    <header class="h-16 bg-white/80 backdrop-blur border-b border-slate-100 flex justify-between items-center px-8 z-10">
+      <h2 class="text-xl font-bold text-slate-700">我的新旅程</h2>
+      <div class="flex gap-4">
+        <button class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"><i class="fas fa-bell"></i></button>
+        <button class="btn-primary px-4 py-2 text-sm shadow-none">导出行程</button>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-50 rounded-full filter blur-[100px] -z-10 pointer-events-none"></div>
+
+      <div class="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        
+        <div class="lg:col-span-1 space-y-6">
+          <div class="glass-card p-6 fade-in-up">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span class="w-1 h-6 bg-teal-400 rounded-full"></span> 旅程设定
+            </h3>
+            
+            <form class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">目的地</label>
+                <div class="input-icon-wrapper">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <input type="text" class="input-field" placeholder="例如：京都, 日本">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">天数</label>
+                  <input type="number" class="input-field px-4" placeholder="5">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">预算</label>
+                  <input type="number" class="input-field px-4" placeholder="¥ 5000">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">旅行风格</label>
+                <div class="flex flex-wrap gap-2">
+                  <span class="px-3 py-1 rounded-full bg-teal-50 text-teal-600 border border-teal-100 text-sm cursor-pointer hover:bg-teal-100 transition-colors">🧘 休闲放松</span>
+                  <span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-sm cursor-pointer hover:border-teal-400 hover:text-teal-500 transition-colors">📸 特种兵打卡</span>
+                  <span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-sm cursor-pointer hover:border-teal-400 hover:text-teal-500 transition-colors">🍜 美食探索</span>
+                </div>
+              </div>
+
+              <button type="button" class="btn-primary w-full justify-center mt-4">
+                <i class="fas fa-magic"></i> AI 生成行程
+              </button>
+            </form>
+          </div>
+
+          <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden fade-in-up" style="animation-delay: 0.1s;">
+            <i class="fas fa-robot absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
+            <h4 class="font-bold text-lg mb-2">需要灵感?</h4>
+            <p class="text-blue-100 text-sm mb-4">不知道去哪玩？让 AI 根据您的历史喜好推荐。</p>
+            <button class="text-sm font-bold bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">试试手气</button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 flex flex-col gap-6">
+          <div class="w-full h-64 bg-slate-200 rounded-2xl relative overflow-hidden shadow-inner group cursor-pointer fade-in-up" style="animation-delay: 0.2s;">
+            <img src="https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/10 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+              <button class="bg-white px-4 py-2 rounded-full shadow-lg font-bold text-slate-700 flex items-center gap-2 transform transition-transform group-hover:scale-105">
+                <i class="fas fa-map"></i> 查看地图预览
+              </button>
+            </div>
+          </div>
+
+          <div class="glass-card flex-1 p-8 flex flex-col items-center justify-center text-center fade-in-up" style="animation-delay: 0.3s;">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+              <i class="fas fa-clipboard-list text-3xl text-slate-300"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-700">等待生成行程...</h3>
+            <p class="text-slate-400 max-w-xs mt-2">填写左侧信息，AI 将为您定制专属路线，包括景点、交通和美食推荐。</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</body>
+</html>

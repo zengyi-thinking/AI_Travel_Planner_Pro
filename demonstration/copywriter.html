@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文案生成 - WanderFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#F8FAFC] h-screen flex overflow-hidden">
+
+  <aside class="w-64 bg-white border-r border-slate-100 flex flex-col z-20 shadow-sm flex-shrink-0">
+    <div class="p-6 flex items-center gap-2 text-teal-500">
+      <i class="fas fa-paper-plane text-2xl"></i>
+      <span class="font-bold text-xl text-slate-800">WanderFlow</span>
+    </div>
+    <nav class="flex-1 px-4 space-y-2 mt-4">
+      <a href="planner.html" class="nav-item"> <i class="fas fa-map w-6"></i> 规划行程 </a>
+      <a href="qa.html" class="nav-item"> <i class="fas fa-comments w-6"></i> AI 助手 </a>
+      <a href="#" class="nav-item active"> <i class="fas fa-pen-nib w-6"></i> 文案生成 </a>
+      <a href="settings.html" class="nav-item"> <i class="fas fa-cog w-6"></i> 账户设置 </a>
+    </nav>
+  </aside>
+
+  <main class="flex-1 flex flex-col h-full relative">
+    <div class="absolute inset-0 bg-gradient-to-br from-teal-50/50 to-blue-50/50 -z-10"></div>
+
+    <header class="h-16 border-b border-slate-200/60 flex items-center px-8 bg-white/50 backdrop-blur">
+      <h2 class="text-xl font-bold text-slate-700">朋友圈/小红书 文案生成</h2>
+    </header>
+
+    <div class="flex-1 overflow-hidden p-6">
+      <div class="max-w-6xl mx-auto h-full grid lg:grid-cols-2 gap-6">
+        
+        <div class="glass-card p-6 flex flex-col h-full overflow-y-auto fade-in-up">
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-bold text-slate-500 mb-2">1. 上传照片 (AI 将识别内容)</label>
+              <div class="border-2 border-dashed border-slate-300 rounded-2xl h-32 flex flex-col items-center justify-center text-slate-400 hover:border-teal-400 hover:bg-teal-50/50 transition-colors cursor-pointer group">
+                <i class="fas fa-cloud-upload-alt text-3xl mb-2 group-hover:scale-110 transition-transform"></i>
+                <span class="text-sm">点击或拖拽上传照片</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-500 mb-2">2. 选择平台风格</label>
+              <div class="grid grid-cols-3 gap-3">
+                <button class="border border-red-200 bg-red-50 text-red-500 py-3 rounded-xl font-bold hover:bg-red-100 transition-colors ring-2 ring-transparent focus:ring-red-400">
+                  <i class="fab fa-instagram"></i> 小红书
+                </button>
+                <button class="border border-green-200 bg-green-50 text-green-600 py-3 rounded-xl font-bold hover:bg-green-100 transition-colors">
+                  <i class="fab fa-weixin"></i> 朋友圈
+                </button>
+                <button class="border border-blue-200 bg-blue-50 text-blue-500 py-3 rounded-xl font-bold hover:bg-blue-100 transition-colors">
+                  <i class="fab fa-twitter"></i> 微博
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-500 mb-2">3. 核心关键词</label>
+              <input type="text" class="input-field px-4 !pl-4" placeholder="例如：日落、治愈、大海、特种兵">
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-500 mb-2">4. 情感基调</label>
+              <input type="range" class="w-full accent-teal-500">
+              <div class="flex justify-between text-xs text-slate-400 mt-1">
+                <span>文艺忧郁</span>
+                <span>幽默搞怪</span>
+                <span>激情澎湃</span>
+              </div>
+            </div>
+
+            <button class="btn-primary w-full justify-center mt-auto py-3 text-lg">
+              <i class="fas fa-magic"></i> 一键生成文案
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 flex flex-col h-full bg-white/60 relative overflow-hidden fade-in-up" style="animation-delay: 0.1s;">
+          <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <i class="fas fa-quote-right text-9xl text-slate-800"></i>
+          </div>
+          
+          <h3 class="text-lg font-bold text-slate-700 mb-4">生成结果预览</h3>
+          
+          <div class="flex-1 bg-white border border-slate-100 rounded-2xl p-6 shadow-inner overflow-y-auto">
+            <div class="flex items-center gap-3 mb-4">
+              <img src="https://i.pravatar.cc/100?img=12" class="w-10 h-10 rounded-full">
+              <div>
+                <div class="font-bold text-sm">Alex Chen</div>
+                <div class="text-xs text-slate-400">刚刚发布于 冰岛</div>
+              </div>
+            </div>
+            
+            <div class="space-y-4 text-slate-600 leading-relaxed">
+              <p>终于来到了世界的尽头！🏔️</p>
+              <p>当极光在头顶舞动的那一刻，所有的长途跋涉都值了。这里不仅有黑沙滩的冷峻，还有钻石沙滩的璀璨。✨</p>
+              <p>在这片孤独而浪漫的土地上，感觉时间都静止了。如果你也想逃离城市的喧嚣，一定要来一次冰岛！🚀</p>
+              <p class="text-blue-500">#冰岛旅行 #极光 #治愈系风景 #旅行日记</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <div class="h-32 bg-slate-200 rounded-lg animate-pulse"></div>
+              <div class="h-32 bg-slate-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-4">
+            <button class="flex-1 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"><i class="far fa-copy"></i> 复制</button>
+            <button class="flex-1 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"><i class="fas fa-share-alt"></i> 分享</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</body>
+</html>

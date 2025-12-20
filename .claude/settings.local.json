@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "mcp__zai-mcp-server__analyze_image",
+      "mcp__web-reader__webReader",
+      "mcp__web-search-prime__webSearchPrime",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(env)",
+      "Bash(unset:*)",
+      "Bash(mysql:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(PYTHONPATH=/d/DevProject/AI_Travel_Planner2.0/backend python -c:*)",
+      "Bash(find:*)",
+      "Bash(pkill:*)",
+      "Bash(mkdir:*)",
+      "mcp__spec-workflow__log-implementation",
+      "mcp__spec-workflow__spec-status",
+      "Bash(python3 -c:*)",
+      "Bash(git checkout:*)",
+      "Bash(alembic:*)",
+      "Bash(PYTHONPATH=. python:*)",
+      "Bash(set:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(tree:*)",
+      "WebFetch(domain:dribbble.com)",
+      "Bash(done:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

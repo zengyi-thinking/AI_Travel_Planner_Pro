@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册账号 - WanderFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="h-screen w-screen overflow-hidden flex items-center justify-center relative">
+
+  <div class="fixed top-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob"></div>
+  <div class="fixed bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-teal-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000"></div>
+
+  <div class="glass-card w-[95%] max-w-[1100px] h-[90vh] flex overflow-hidden shadow-2xl relative z-10 fade-in-up">
+    
+    <div class="hidden lg:flex w-5/12 relative bg-cover bg-center items-end p-12 overflow-hidden group" 
+         style="background-image: url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');">
+      <div class="absolute inset-0 bg-gradient-to-t from-teal-900/80 to-transparent"></div>
+      <div class="relative z-10 text-white">
+        <h2 class="text-3xl font-bold mb-4 font-heading">加入千万旅行者</h2>
+        <ul class="space-y-3 opacity-90 text-sm font-light">
+          <li class="flex items-center gap-2"><i class="fas fa-check-circle text-teal-400"></i> 解锁 AI 智能行程规划</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check-circle text-teal-400"></i> 获取独家旅行折扣</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check-circle text-teal-400"></i> 同步多设备行程数据</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-7/12 bg-white/80 p-8 md:p-12 flex flex-col justify-center relative overflow-y-auto">
+      <div class="absolute top-8 right-8 text-sm text-slate-500">
+        已有账号? <a href="login.html" class="text-teal-600 font-bold hover:underline">直接登录</a>
+      </div>
+
+      <div class="max-w-md mx-auto w-full">
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">创建新账户 ✨</h1>
+        <p class="text-slate-500 mb-8">只需 30 秒，开启您的智能旅行</p>
+
+        <form class="space-y-5">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">用户名</label>
+              <input type="text" class="input-field px-4 !pl-4" placeholder="Wanderer">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">手机号</label>
+              <input type="tel" class="input-field px-4 !pl-4" placeholder="138...">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">电子邮箱</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope"></i>
+              <input type="email" class="input-field" placeholder="name@example.com">
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">设置密码</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock"></i>
+              <input type="password" class="input-field" placeholder="至少 6 位字符">
+            </div>
+          </div>
+
+          <label class="flex items-start gap-2 text-sm text-slate-500 mt-4 cursor-pointer">
+            <input type="checkbox" class="mt-1 rounded text-teal-500 focus:ring-teal-500">
+            <span>我已阅读并同意 <a href="#" class="text-teal-600 underline">服务条款</a> 和 <a href="#" class="text-teal-600 underline">隐私政策</a></span>
+          </label>
+
+          <button type="button" class="btn-primary w-full justify-center text-lg mt-6 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+            立即注册
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <style>
+    .animate-blob { animation: blob 10s infinite; }
+    @keyframes blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+    .animation-delay-2000 { animation-delay: 2s; }
+  </style>
+</body>
+</html>
