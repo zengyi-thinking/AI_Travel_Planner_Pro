@@ -3,7 +3,7 @@ Conversation DAO
 """
 
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.qa.models.conversation import Conversation
 
@@ -27,10 +27,23 @@ class ConversationDAO:
         )
         return result.scalars().first()
 
-    async def list_by_user(self, user_id: int) -> List[Conversation]:
+    async def list_by_user(
+        self,
+        user_id: int,
+        offset: int = 0,
+        limit: int = 20
+    ) -> List[Conversation]:
         result = await self.db.execute(
             select(Conversation)
             .where(Conversation.user_id == user_id)
             .order_by(Conversation.created_at.desc())
+            .offset(offset)
+            .limit(limit)
         )
         return list(result.scalars().all())
+
+    async def count_by_user(self, user_id: int) -> int:
+        result = await self.db.execute(
+            select(func.count(Conversation.id)).where(Conversation.user_id == user_id)
+        )
+        return int(result.scalar() or 0)

@@ -31,17 +31,47 @@ class ChatService:
         )
         return await self.conversation_dao.create(conversation)
 
-    async def list_sessions(self, user_id: int) -> List[Conversation]:
-        return await self.conversation_dao.list_by_user(user_id)
+    async def list_sessions(
+        self,
+        user_id: int,
+        page: int = 1,
+        size: int = 20
+    ) -> List[Conversation]:
+        offset = max(page - 1, 0) * size
+        return await self.conversation_dao.list_by_user(
+            user_id=user_id,
+            offset=offset,
+            limit=size
+        )
+
+    async def count_sessions(self, user_id: int) -> int:
+        return await self.conversation_dao.count_by_user(user_id)
 
     async def get_session(self, user_id: int, session_id: int) -> Optional[Conversation]:
         return await self.conversation_dao.get_by_id(session_id, user_id)
 
-    async def list_messages(self, user_id: int, session_id: int) -> List[Message]:
+    async def list_messages(
+        self,
+        user_id: int,
+        session_id: int,
+        page: int = 1,
+        size: int = 50
+    ) -> List[Message]:
         session = await self.get_session(user_id, session_id)
         if not session:
             return []
-        return await self.message_dao.list_by_conversation(session_id)
+        offset = max(page - 1, 0) * size
+        return await self.message_dao.list_by_conversation(
+            conversation_id=session_id,
+            offset=offset,
+            limit=size
+        )
+
+    async def count_messages(self, user_id: int, session_id: int) -> int:
+        session = await self.get_session(user_id, session_id)
+        if not session:
+            return 0
+        return await self.message_dao.count_by_conversation(session_id)
 
     async def send_message(self, user_id: int, data: MessageCreate) -> Message:
         session = await self.get_session(user_id, data.session_id)
