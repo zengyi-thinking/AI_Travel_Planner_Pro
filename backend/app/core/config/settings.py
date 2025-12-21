@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     QA_API_KEY: Optional[str] = None
+    ANTHROPIC_BASE_URL: Optional[str] = None
+    ANTHROPIC_AUTH_TOKEN: Optional[str] = None
+    ANTHROPIC_MODEL: Optional[str] = None
+    API_TIMEOUT_MS: int = 60000
 
     # Third-party Services
     WEATHER_API_KEY: Optional[str] = None

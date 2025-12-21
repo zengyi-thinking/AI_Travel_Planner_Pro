@@ -11,6 +11,7 @@ from app.modules.qa.daos.message_dao import MessageDAO
 from app.modules.qa.models.conversation import Conversation
 from app.modules.qa.models.message import Message
 from app.modules.qa.schemas.chat_schema import ChatCreate, ChatFeatures, MessageCreate
+from app.modules.qa.rag.knowledge_base import get_knowledge_base
 
 
 class ChatService:
@@ -86,14 +87,7 @@ class ChatService:
         )
         await self.message_dao.create(user_message)
 
-        assistant_content = (
-            f"我理解您的问题是：\"{data.content}\"。\n\n"
-            "我可以提供：\n"
-            "1) 行程规划建议\n"
-            "2) 天气与出行提示\n"
-            "3) 签证与政策说明\n"
-            "4) 美食与景点推荐\n"
-        )
+        assistant_content = await self._build_response(session.features_json, data.content)
         assistant_message = Message(
             conversation_id=session.id,
             role="assistant",
@@ -101,6 +95,21 @@ class ChatService:
             message_type="text"
         )
         return await self.message_dao.create(assistant_message)
+
+    async def _build_response(self, features_json: Optional[str], content: str) -> str:
+        features = self.parse_features(features_json)
+        if features and features.knowledge_base:
+            knowledge_base = get_knowledge_base()
+            return await knowledge_base.generate_answer(content)
+
+        return (
+            f"我理解您的问题是：\"{content}\"。\n\n"
+            "我可以提供：\n"
+            "1) 行程规划建议\n"
+            "2) 天气与出行提示\n"
+            "3) 签证与政策说明\n"
+            "4) 美食与景点推荐\n"
+        )
 
     def parse_features(self, features_json: Optional[str]) -> Optional[ChatFeatures]:
         if not features_json:

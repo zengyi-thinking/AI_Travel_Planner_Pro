@@ -17,6 +17,7 @@ openai==1.10.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 loguru==0.7.2
+PyPDF2==3.0.1
 pytest==8.0.0
 pytest-asyncio==0.23.5
 pytest-httpx==0.27.0
