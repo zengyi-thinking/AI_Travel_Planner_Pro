@@ -1,6 +1,40 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import api from '@/utils/api'
 import type { ChatMessage, ChatSession } from '@/types/api'
+
+interface QaResponse<T = any> {
+  success: boolean
+  code: number
+  message: string
+  data?: T
+}
+
+interface QaSessionResponse {
+  id: number
+  title: string
+  features?: {
+    knowledge_base?: boolean
+    weather?: boolean
+    voice?: boolean
+  }
+  created_at: string
+}
+
+interface QaMessageResponse {
+  id: number
+  session_id: number
+  role: 'user' | 'assistant'
+  content: string
+  message_type: 'text' | 'voice'
+  created_at: string
+}
+
+interface QaFeatures {
+  knowledge_base?: boolean
+  weather?: boolean
+  voice?: boolean
+}
 
 export const useQaStore = defineStore('qa', () => {
   // 状态
@@ -10,19 +44,46 @@ export const useQaStore = defineStore('qa', () => {
   const isLoading = ref(false)
   const isTyping = ref(false)
 
-  // 创建新会话
-  const createSession = async (title?: string) => {
-    try {
-      // TODO: 调用API创建会话
-      // const response = await api.post<ChatSession>('/qa/sessions', { title })
+  const normalizeFeatures = (features?: QaFeatures) => ({
+    knowledge_base: !!features?.knowledge_base,
+    weather: !!features?.weather,
+    voice: !!features?.voice
+  })
 
-      // 模拟创建
-      const newSession: ChatSession = {
-        id: `session-${Date.now()}`,
-        user_id: 1,
+  const shouldCreateNewSession = (features?: QaFeatures) => {
+    if (!currentSession.value) return true
+    if (!features) return false
+    const current = normalizeFeatures(currentSession.value.features)
+    const next = normalizeFeatures(features)
+    return (
+      current.knowledge_base !== next.knowledge_base ||
+      current.weather !== next.weather ||
+      current.voice !== next.voice
+    )
+  }
+
+  // 创建新会话
+  const createSession = async (title?: string, features?: QaFeatures) => {
+    try {
+      const payload = {
         title: title || '新对话',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        features: features ? normalizeFeatures(features) : undefined
+      }
+      const response = await api.post<any>('/qa/sessions', payload)
+      console.log('Create session response:', response)
+
+      const sessionPayload = response.data?.session
+      if (!sessionPayload) {
+        return { success: false, error: '创建对话失败' }
+      }
+
+      const newSession: ChatSession = {
+        id: sessionPayload.id,
+        user_id: 0,
+        title: sessionPayload.title,
+        features: sessionPayload.features,
+        created_at: sessionPayload.created_at,
+        updated_at: sessionPayload.created_at
       }
 
       sessions.value.unshift(newSession)
@@ -37,14 +98,21 @@ export const useQaStore = defineStore('qa', () => {
   }
 
   // 获取所有会话
-  const fetchSessions = async () => {
+  const fetchSessions = async (page = 1, size = 20) => {
     try {
-      // TODO: 调用API获取会话列表
-      // const response = await api.get<ChatSession[]>('/qa/sessions')
-
-      // 模拟数据
-      sessions.value = []
-      return { success: true }
+      const response = await api.get<any>('/qa/sessions', {
+        params: { page, size }
+      })
+      const items = response.data?.items || []
+      sessions.value = items.map((session: any) => ({
+        id: session.id,
+        user_id: 0,
+        title: session.title,
+        features: session.features,
+        created_at: session.created_at,
+        updated_at: session.created_at
+      }))
+      return { success: true, data: sessions.value }
     } catch (error) {
       console.error('Failed to fetch sessions:', error)
       return { success: false, error: '获取对话列表失败' }
@@ -52,18 +120,24 @@ export const useQaStore = defineStore('qa', () => {
   }
 
   // 切换会话
-  const switchSession = async (sessionId: string) => {
+  const switchSession = async (sessionId: number) => {
     try {
-      // TODO: 调用API获取会话消息
-      // const response = await api.get<ChatMessage[]>(`/qa/sessions/${sessionId}/messages`)
-
-      // 模拟切换
+      const response = await api.get<any>(`/qa/sessions/${sessionId}/messages`, {
+        params: { page: 1, size: 50 }
+      })
+      const items = response.data?.items || []
       const session = sessions.value.find(s => s.id === sessionId)
       if (session) {
         currentSession.value = session
-        // TODO: 加载消息历史
-        messages.value = []
       }
+      messages.value = items.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        session_id: msg.session_id,
+        message_type: msg.message_type,
+        created_at: msg.created_at
+      }))
 
       return { success: true }
     } catch (error) {
@@ -73,65 +147,68 @@ export const useQaStore = defineStore('qa', () => {
   }
 
   // 发送消息
-  const sendMessage = async (content: string, sessionId?: string) => {
-    const targetSessionId = sessionId || currentSession.value?.id
+  const sendMessage = async (content: string, options?: QaFeatures) => {
+    if (!content.trim()) return { success: false, error: '内容不能为空' }
 
+    if (shouldCreateNewSession(options)) {
+      const created = await createSession(undefined, options)
+      if (!created.success) {
+        return created
+      }
+    }
+
+    const targetSessionId = currentSession.value?.id
     if (!targetSessionId) {
-      // 如果没有当前会话，创建新会话
-      await createSession()
+      return { success: false, error: '会话创建失败' }
     }
 
     isLoading.value = true
     isTyping.value = true
 
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      role: 'user',
+      content,
+      session_id: targetSessionId,
+      message_type: 'text',
+      timestamp: new Date().toISOString()
+    }
+    messages.value.push(userMessage)
+
     try {
-      // 添加用户消息
-      const userMessage: ChatMessage = {
-        id: Date.now(),
-        role: 'user',
+      const response = await api.post<any>('/qa/messages', {
         content,
-        timestamp: new Date().toISOString(),
-        session_id: targetSessionId!
+        session_id: targetSessionId,
+        message_type: 'text'
+      })
+      console.log('Send message response:', response)
+
+      const messagePayload = response.data?.message
+      if (messagePayload) {
+        messages.value.push({
+          id: messagePayload.id,
+          role: messagePayload.role,
+          content: messagePayload.content,
+          session_id: messagePayload.session_id,
+          message_type: messagePayload.message_type,
+          created_at: messagePayload.created_at
+        })
       }
-
-      messages.value.push(userMessage)
-
-      // TODO: 调用API发送消息
-      // const response = await api.post<ChatMessage>('/qa/chat', {
-      //   message: content,
-      //   session_id: targetSessionId
-      // })
-
-      // 模拟AI响应
-      setTimeout(() => {
-        const assistantMessage: ChatMessage = {
-          id: Date.now() + 1,
-          role: 'assistant',
-          content: `我理解您的问题是："${content}"。我可以为您提供相关的旅行建议和信息。作为您的AI旅行助手，我可以帮助您：\n\n1. 查询目的地天气和最佳旅行时间\n2. 推荐热门景点和隐藏宝藏\n3. 制定详细的行程计划\n4. 提供签证、货币、通讯等实用信息\n\n请问您还有什么想了解的吗？`,
-          timestamp: new Date().toISOString(),
-          session_id: targetSessionId!
-        }
-
-        messages.value.push(assistantMessage)
-        isTyping.value = false
-      }, 1000)
 
       return { success: true }
     } catch (error) {
       console.error('Failed to send message:', error)
-      isTyping.value = false
       return { success: false, error: '发送消息失败' }
     } finally {
+      isTyping.value = false
       isLoading.value = false
     }
   }
 
   // 删除会话
-  const deleteSession = async (sessionId: string) => {
+  const deleteSession = async (sessionId: number) => {
     try {
-      // TODO: 调用API删除会话
-      // await api.delete(`/qa/sessions/${sessionId}`)
-
+      console.warn('Delete API not implemented; removing locally.')
       sessions.value = sessions.value.filter(s => s.id !== sessionId)
 
       if (currentSession.value?.id === sessionId) {

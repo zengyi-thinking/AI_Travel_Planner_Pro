@@ -26,8 +26,11 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials: LoginRequest) => {
     isLoading.value = true
     try {
-      const response = await api.post<LoginResponse>('/auth/login', credentials)
+      console.log('Login request:', credentials)
+      const response = await api.post<any>('/auth/login', credentials)
+      console.log('Login response:', response)
 
+      // 直接从response中获取数据
       user.value = response.user
       token.value = response.access_token
       isAuthenticated.value = true
@@ -48,8 +51,11 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (data: RegisterRequest) => {
     isLoading.value = true
     try {
-      const response = await api.post<RegisterResponse>('/auth/register', data)
+      console.log('Register request:', data)
+      const response = await api.post<any>('/auth/register', data)
+      console.log('Register response:', response)
 
+      // 直接从response中获取数据
       user.value = response.user
       token.value = response.access_token
       isAuthenticated.value = true
@@ -67,7 +73,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // 登出
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch (error) {
+      console.warn('Logout request failed:', error)
+    }
     user.value = null
     token.value = null
     isAuthenticated.value = false
@@ -82,10 +93,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value) return { success: false, error: '用户未登录' }
 
     try {
-      // TODO: 调用更新API
-      // await api.patch(`/users/${user.value.id}`, data)
-
-      user.value = { ...user.value, ...data }
+      const response = await api.put<User>('/auth/me', data)
+      user.value = response
       localStorage.setItem('user', JSON.stringify(user.value))
 
       return { success: true }

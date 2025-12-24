@@ -17,7 +17,10 @@ api.interceptors.request.use(
 )
 
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // 直接返回响应数据，让调用者处理
+    return response.data
+  },
   (error) => Promise.reject(error)
 )
 

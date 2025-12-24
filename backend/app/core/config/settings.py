@@ -8,6 +8,15 @@ It loads configuration from environment variables and .env files.
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 from pathlib import Path
+import os
+
+_ENV_PATH = Path(__file__).parent.parent.parent.parent / ".env"
+if _ENV_PATH.exists():
+    with _ENV_PATH.open("r", encoding="utf-8") as env_file:
+        for line in env_file:
+            if "=" in line and not line.strip().startswith("#"):
+                key, value = line.strip().split("=", 1)
+                os.environ[key] = value
 
 
 class Settings(BaseSettings):
@@ -104,7 +113,7 @@ class Settings(BaseSettings):
     CACHE_MAX_SIZE: int = 10000
 
     # CORS Configuration
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    ALLOWED_ORIGINS: List[str] = ["*", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:5173"]
 
     class Config:
         env_file = str(Path(__file__).parent.parent.parent.parent / ".env")

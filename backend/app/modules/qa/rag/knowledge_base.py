@@ -18,7 +18,7 @@ from PyPDF2 import PdfReader
 from app.core.config.settings import settings
 from app.modules.qa.rag.vector_store import BM25VectorStore, Chunk, tokenize
 from app.modules.qa.rag.retriever import Retriever
-from app.modules.qa.prompts.qa_prompts import RAG_SYSTEM_PROMPT
+from app.modules.qa.prompts.qa_prompts import RAG_SYSTEM_PROMPT, GENERAL_SYSTEM_PROMPT
 
 
 _CJK_PATTERN = re.compile(r"[\u4e00-\u9fff]")
@@ -217,11 +217,16 @@ class KnowledgeBase:
         retrieval = self.retrieve(query, top_k=top_k)
         context = "\n\n".join(chunk.content for chunk in retrieval.chunks)
         if not context:
-            return "未在知识库中找到相关内容，请尝试更具体的目的地或问题。"
+            prompt = f"{GENERAL_SYSTEM_PROMPT}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
+            return await self._call_anthropic(prompt)
 
         prompt = f"{RAG_SYSTEM_PROMPT}\n\n参考资料：\n{context}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
         response = await self._call_anthropic(prompt)
         return response or f"参考资料：\n{context}\n\n问题：{query}"
+
+    async def generate_general_answer(self, query: str) -> str:
+        prompt = f"{GENERAL_SYSTEM_PROMPT}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
+        return await self._call_anthropic(prompt)
 
     async def _call_anthropic(self, prompt: str) -> str:
         if not settings.ANTHROPIC_AUTH_TOKEN or not settings.ANTHROPIC_BASE_URL:
@@ -248,12 +253,34 @@ class KnowledgeBase:
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                if data.get("choices"):
-                    return data["choices"][0].get("message", {}).get("content", "")
-                if "content" in data and data["content"]:
-                    return data["content"][0].get("text", "")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("choices"):
+                        return data["choices"][0].get("message", {}).get("content", "")
+                    if "content" in data and data["content"]:
+                        return data["content"][0].get("text", "")
+                # Fallback: try OpenAI-compatible endpoint for GLM
+                if "open.bigmodel.cn" in base_url:
+                    fallback_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+                    fallback_headers = {
+                        "Authorization": f"Bearer {settings.ANTHROPIC_AUTH_TOKEN}",
+                        "content-type": "application/json",
+                    }
+                    fallback_payload = {
+                        "model": settings.ANTHROPIC_MODEL or "glm-4.6",
+                        "max_tokens": 800,
+                        "temperature": 0.2,
+                        "messages": [{"role": "user", "content": prompt}],
+                    }
+                    fallback_resp = await client.post(
+                        fallback_url,
+                        headers=fallback_headers,
+                        json=fallback_payload
+                    )
+                    if fallback_resp.status_code == 200:
+                        data = fallback_resp.json()
+                        if data.get("choices"):
+                            return data["choices"][0].get("message", {}).get("content", "")
             except Exception:
                 return ""
         return ""

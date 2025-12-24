@@ -31,14 +31,32 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+import logging
+from datetime import datetime
+from app.core.db.session import init_db
+
+# Setup logging
+logs_dir = Path(__file__).parent / "logs"
+logs_dir.mkdir(exist_ok=True)
+log_file = logs_dir / f"app_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Import settings
 try:
     from app.core.config.settings import settings
     HAS_SETTINGS = True
-    print("[OK] Settings loaded successfully")
+    logger.info("[OK] Settings loaded successfully")
 except ImportError as e:
-    print(f"[WARN] Settings module not found: {e}")
+    logger.warning(f"[WARN] Settings module not found: {e}")
     HAS_SETTINGS = False
     settings = None
 
@@ -105,14 +123,14 @@ async def health_check():
 try:
     from app.modules.users.api.v1 import router as users_router
     app.include_router(users_router, prefix="/api/v1/auth", tags=["auth"])
-    print("[OK] User authentication routes loaded")
-    print(f"  - POST /api/v1/auth/register")
-    print(f"  - POST /api/v1/auth/login")
-    print(f"  - GET /api/v1/auth/me")
-    print(f"  - PUT /api/v1/auth/me")
-    print(f"  - POST /api/v1/auth/change-password")
+    logger.info("[OK] User authentication routes loaded")
+    logger.info("  - POST /api/v1/auth/register")
+    logger.info("  - POST /api/v1/auth/login")
+    logger.info("  - GET /api/v1/auth/me")
+    logger.info("  - PUT /api/v1/auth/me")
+    logger.info("  - POST /api/v1/auth/change-password")
 except Exception as e:
-    print(f"[ERROR] User auth routes failed: {e}")
+    logger.error(f"[ERROR] User auth routes failed: {e}")
     import traceback
     traceback.print_exc()
 
@@ -123,42 +141,57 @@ try:
     @app.get("/api/v1/itineraries", tags=["planner"])
     async def get_itineraries():
         return {"message": "Get itineraries list - TODO"}
-    
+
     @app.post("/api/v1/itineraries", tags=["planner"])
     async def create_itinerary():
         return {"message": "Create itinerary - TODO"}
-    
+
     @app.get("/api/v1/itineraries/{itinerary_id}", tags=["planner"])
     async def get_itinerary(itinerary_id: int):
         return {"message": f"Get itinerary {itinerary_id} - TODO"}
-    
+
     @app.post("/api/v1/itineraries/{itinerary_id}/generate", tags=["planner"])
     async def generate_itinerary(itinerary_id: int):
         return {"message": f"AI generate itinerary {itinerary_id} - TODO"}
-    
-    print("[OK] Itinerary planner routes loaded")
+
+    logger.info("[OK] Itinerary planner routes loaded")
 except Exception as e:
-    print(f"[WARN] Planner routes failed: {e}")
+    logger.warning(f"[WARN] Planner routes failed: {e}")
 
 
 # ===== QA Chat Routes =====
 
 try:
-    @app.post("/api/v1/qa/chat", tags=["qa"])
-    async def chat():
-        return {"message": "Chat endpoint - TODO"}
-    
-    @app.get("/api/v1/qa/sessions", tags=["qa"])
-    async def get_sessions():
-        return {"message": "Get chat sessions - TODO"}
-    
+    # Test route without body
+    @app.post("/api/v1/qa/test", tags=["qa"])
+    async def test_qa():
+        logger.info("Test QA endpoint called")
+        return {"message": "Test successful"}
+
+    # Simplified QA routes for testing
     @app.post("/api/v1/qa/sessions", tags=["qa"])
     async def create_session():
-        return {"message": "Create new session - TODO"}
-    
-    print("[OK] QA chat routes loaded")
+        logger.info("Create session called")
+        return {"message": "Session created", "id": 1}
+
+    @app.get("/api/v1/qa/sessions", tags=["qa"])
+    async def get_sessions():
+        return {"items": [], "total": 0}
+
+    @app.post("/api/v1/qa/messages", tags=["qa"])
+    async def send_message():
+        logger.info("Send message called")
+        return {"message": "Message received", "response": "Hello from QA!"}
+
+    logger.info("[OK] QA chat routes loaded (simplified)")
+    logger.info("  - POST /api/v1/qa/test")
+    logger.info("  - POST /api/v1/qa/sessions")
+    logger.info("  - GET /api/v1/qa/sessions")
+    logger.info("  - POST /api/v1/qa/messages")
 except Exception as e:
-    print(f"[WARN] QA routes failed: {e}")
+    logger.error(f"[WARN] QA routes failed: {e}")
+    import traceback
+    traceback.print_exc()
 
 
 # ===== Copywriting Routes =====
@@ -167,14 +200,14 @@ try:
     @app.post("/api/v1/copywriting/generate", tags=["copywriting"])
     async def generate_copywriting():
         return {"message": "Generate copywriting - TODO"}
-    
+
     @app.get("/api/v1/copywriting/results", tags=["copywriting"])
     async def get_copywriting_results():
         return {"message": "Get copywriting history - TODO"}
-    
-    print("[OK] Copywriting routes loaded")
+
+    logger.info("[OK] Copywriting routes loaded")
 except Exception as e:
-    print(f"[WARN] Copywriting routes failed: {e}")
+    logger.warning(f"[WARN] Copywriting routes failed: {e}")
 
 
 # ===== Startup Event =====
@@ -182,22 +215,32 @@ except Exception as e:
 @app.on_event("startup")
 async def startup_event():
     """Execute on app startup"""
-    print("\n" + "="*50)
-    print("WanderFlow API Starting...")
-    print("="*50)
-    print(f"Server: http://localhost:8000")
-    print(f"API Docs: http://localhost:8000/docs")
-    print(f"ReDoc: http://localhost:8000/redoc")
-    print(f"Health: http://localhost:8000/health")
-    print("="*50 + "\n")
+    logger.info("="*50)
+    logger.info("WanderFlow API Starting...")
+    logger.info("="*50)
+
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+    logger.info(f"Server: http://localhost:8000")
+    logger.info(f"API Docs: http://localhost:8000/docs")
+    logger.info(f"ReDoc: http://localhost:8000/redoc")
+    logger.info(f"Health: http://localhost:8000/health")
+    logger.info("="*50)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Execute on app shutdown"""
-    print("\n" + "="*50)
-    print("WanderFlow API Shutdown")
-    print("="*50 + "\n")
+    logger.info("="*50)
+    logger.info("WanderFlow API Shutdown")
+    logger.info("="*50)
 
 
 # ===== Main Function =====
@@ -209,16 +252,16 @@ if __name__ == "__main__":
         try:
             port = int(sys.argv[1])
         except ValueError:
-            print("Invalid port, using default 8000")
+            logger.warning("Invalid port, using default 8000")
 
     # Start application
-    print("\n" + "="*50)
-    print("Starting WanderFlow Backend")
-    print("="*50)
-    print(f"Tip: Press Ctrl+C to stop")
-    print(f"URL: http://localhost:{port}")
-    print(f"Docs: http://localhost:{port}/docs")
-    print("="*50 + "\n")
+    logger.info("="*50)
+    logger.info("Starting WanderFlow Backend")
+    logger.info("="*50)
+    logger.info(f"Tip: Press Ctrl+C to stop")
+    logger.info(f"URL: http://localhost:{port}")
+    logger.info(f"Docs: http://localhost:{port}/docs")
+    logger.info("="*50)
 
     # Run uvicorn - pass app instance directly without reload for stability
     uvicorn.run(

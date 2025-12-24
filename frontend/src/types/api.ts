@@ -47,10 +47,13 @@ export interface Itinerary {
   user_id: number
   title: string
   destination: string
+  departure?: string | null
   days: number
-  budget: number
+  budget: number | null
   travel_style: 'leisure' | 'adventure' | 'foodie'
-  status: 'draft' | 'published' | 'archived'
+  status: 'draft' | 'active' | 'completed' | 'archived'
+  ai_generated?: boolean
+  days_detail?: DayPlan[]
   created_at: string
   updated_at: string
 }
@@ -58,8 +61,9 @@ export interface Itinerary {
 export interface ItineraryCreateRequest {
   title: string
   destination: string
+  departure?: string | null
   days: number
-  budget: number
+  budget?: number | null
   travel_style: 'leisure' | 'adventure' | 'foodie'
 }
 
@@ -85,15 +89,22 @@ export interface ChatMessage {
   id: number
   role: 'user' | 'assistant'
   content: string
-  timestamp: string
-  session_id: string
+  session_id: number
+  message_type?: 'text' | 'voice'
+  created_at?: string
+  timestamp?: string
   metadata?: Record<string, any>
 }
 
 export interface ChatSession {
-  id: string
+  id: number
   user_id: number
   title: string
+  features?: {
+    knowledge_base?: boolean
+    weather?: boolean
+    voice?: boolean
+  }
   created_at: string
   updated_at: string
 }
@@ -119,6 +130,7 @@ export interface CopywritingResult {
   platform: string
   keywords: string[]
   created_at: string
+  rating?: number | null
 }
 
 // 认证相关类型

@@ -37,7 +37,12 @@
       "Bash(rm:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(pip install:*)",
+      "Bash(while read pid:*)",
+      "Bash(do kill:*)",
+      "Bash(tail:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjYzMzM5MzIsInN1YiI6IjQiLCJ0eXBlIjoiYWNjZXNzIn0.1l5hNqjJbJ4KQ4v1t5p5mN6p5j5t5n5b5t5r5r5r5r5r5r5r5r5r5r\")"
     ],
     "deny": [],
     "ask": []

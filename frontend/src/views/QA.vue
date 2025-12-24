@@ -156,7 +156,7 @@ const qaStore = useQaStore()
 const { messages } = storeToRefs(qaStore)
 
 const inputMessage = ref('')
-const knowledgeEnabled = ref(false)
+const knowledgeEnabled = ref(true)
 const weatherEnabled = ref(false)
 const voiceEnabled = ref(false)
 
@@ -192,7 +192,11 @@ const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
   const message = inputMessage.value
   inputMessage.value = ''
-  await qaStore.sendMessage(message)
+  await qaStore.sendMessage(message, {
+    knowledge_base: knowledgeEnabled.value,
+    weather: weatherEnabled.value,
+    voice: voiceEnabled.value
+  })
 }
 
 const handleQuickQuestion = (question: string) => {

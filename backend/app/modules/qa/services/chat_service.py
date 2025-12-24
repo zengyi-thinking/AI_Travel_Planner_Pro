@@ -98,11 +98,12 @@ class ChatService:
 
     async def _build_response(self, features_json: Optional[str], content: str) -> str:
         features = self.parse_features(features_json)
+        knowledge_base = get_knowledge_base()
         if features and features.knowledge_base:
-            knowledge_base = get_knowledge_base()
             return await knowledge_base.generate_answer(content)
 
-        return (
+        response = await knowledge_base.generate_general_answer(content)
+        return response or (
             f"我理解您的问题是：\"{content}\"。\n\n"
             "我可以提供：\n"
             "1) 行程规划建议\n"
