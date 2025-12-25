@@ -18,7 +18,7 @@ from PyPDF2 import PdfReader
 from app.core.config.settings import settings
 from app.modules.qa.rag.vector_store import BM25VectorStore, Chunk, tokenize
 from app.modules.qa.rag.retriever import Retriever
-from app.modules.qa.prompts.qa_prompts import RAG_SYSTEM_PROMPT, GENERAL_SYSTEM_PROMPT
+
 
 
 _CJK_PATTERN = re.compile(r"[\u4e00-\u9fff]")
@@ -217,15 +217,15 @@ class KnowledgeBase:
         retrieval = self.retrieve(query, top_k=top_k)
         context = "\n\n".join(chunk.content for chunk in retrieval.chunks)
         if not context:
-            prompt = f"{GENERAL_SYSTEM_PROMPT}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
+            prompt = f"用户问题：{query}"
             return await self._call_anthropic(prompt)
 
-        prompt = f"{RAG_SYSTEM_PROMPT}\n\n参考资料：\n{context}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
+        prompt = f"参考资料：\n{context}\n\n用户问题：{query}"
         response = await self._call_anthropic(prompt)
         return response or f"参考资料：\n{context}\n\n问题：{query}"
 
     async def generate_general_answer(self, query: str) -> str:
-        prompt = f"{GENERAL_SYSTEM_PROMPT}\n\n用户问题：{query}\n\n请给出简洁、实用的回答："
+        prompt = f"用户问题：{query}"
         return await self._call_anthropic(prompt)
 
     async def _call_anthropic(self, prompt: str) -> str:

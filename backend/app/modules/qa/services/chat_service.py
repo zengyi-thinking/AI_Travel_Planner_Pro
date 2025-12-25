@@ -25,7 +25,7 @@ class ChatService:
         """Get or create QA agent"""
         if self._agent is None:
             self._agent = QAAgent(
-                provider="glm",  # 使用 GLM (智谱AI)
+                provider="minimax",
                 temperature=0.7,
                 enable_rag=use_rag,
                 top_k=4

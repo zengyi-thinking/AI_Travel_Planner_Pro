@@ -1,8 +1,8 @@
 """
 QA Agent for chat functionality.
 
-This module provides the intelligent agent for the QA system,
-integrating with the LLM factory, RAG retriever, and prompt templates.
+This module provides intelligent agent for QA system,
+integrating with LLM factory, RAG retriever, and prompt templates.
 """
 
 from typing import List, Dict, Any, Optional
@@ -10,8 +10,6 @@ from app.core.ai.factory import LLMFactory
 from app.modules.qa.rag.retriever import Retriever
 from app.modules.qa.rag.knowledge_base import get_knowledge_base
 from app.modules.qa.prompts.qa_prompts import (
-    RAG_SYSTEM_PROMPT,
-    GENERAL_SYSTEM_PROMPT,
     create_rag_prompt,
     create_general_prompt
 )
@@ -28,7 +26,7 @@ class QAAgent:
     This agent is responsible for:
     1. Retrieving relevant context using RAG
     2. Building prompts with retrieved context
-    3. Generating responses using the LLM factory
+    3. Generating responses using LLM factory
     """
 
     def __init__(
@@ -56,9 +54,9 @@ class QAAgent:
                 temperature=temperature
             )
         except ValueError as e:
-            logger.warning(f"LLM factory failed: {e}, using fallback mode")
+            logger.warning(f"LLM factory failed: {e}")
             self.llm_client = None
-            
+
         self.enable_rag = enable_rag
         self.top_k = top_k
         self._knowledge_base = None
@@ -82,17 +80,17 @@ class QAAgent:
     def _retrieve_context(self, query: str) -> List[Dict[str, Any]]:
         """
         Retrieve relevant chunks for the query.
-        
+
         Args:
             query: User's question
-            
+
         Returns:
             List of retrieved chunks with metadata
         """
         retriever = self._get_retriever()
         if not retriever:
             return []
-        
+
         try:
             chunks = retriever.retrieve(query, top_k=self.top_k)
             return [
@@ -106,16 +104,47 @@ class QAAgent:
             ]
         except Exception as e:
             logger.error(f"Retrieval error: {e}")
+
+            # 返回空列表，让主流程处理
             return []
+
+    async def chat(
+        self,
+        query: str,
+        use_rag: bool = True
+    ) -> str:
+        """
+        Generate response for user query.
+
+        Args:
+            query: User's question
+            use_rag: Whether to use RAG retrieval
+
+        Returns:
+            Generated response
+
+        Raises:
+            Exception: When LLM is not available or generation fails
+        """
+        if self.llm_client is None:
+            raise Exception("LLM client is not initialized. Please check API configuration.")
+
+        messages = self._build_messages(query, use_rag)
+        response = await LLMFactory.agenerate(self.llm_client, messages)
+
+        if not response or not response.strip():
+            raise Exception("LLM returned empty response. Please try again.")
+
+        return response
 
     def _build_messages(self, query: str, use_rag: bool = True) -> List[Any]:
         """
         Build message list for LLM.
-        
+
         Args:
             query: User's question
             use_rag: Whether to include retrieved context
-            
+
         Returns:
             List of LangChain messages
         """
@@ -127,66 +156,8 @@ class QAAgent:
                     for c in context_chunks
                 ])
                 return create_rag_prompt(query, context)
-        
+
         return create_general_prompt(query)
-
-    async def chat(self, query: str, use_rag: bool = True) -> str:
-        """
-        Generate response for user query.
-        
-        Args:
-            query: User's question
-            use_rag: Whether to use RAG retrieval
-            
-        Returns:
-            Generated response text
-        """
-        try:
-            messages = self._build_messages(query, use_rag)
-            
-            if self.llm_client is None:
-                return self._fallback_response(query, use_rag)
-            
-            response = await LLMFactory.agenerate(self.llm_client, messages)
-            
-            if response:
-                return response
-            
-            return self._fallback_response(query, use_rag)
-            
-        except Exception as e:
-            logger.error(f"Chat error: {e}")
-            return self._fallback_response(query, use_rag)
-
-    def _fallback_response(self, query: str, use_rag: bool) -> str:
-        """
-        Fallback response when LLM is unavailable.
-        
-        Args:
-            query: User's question
-            use_rag: Whether RAG was attempted
-            
-        Returns:
-            Fallback response text
-        """
-        if use_rag:
-            chunks = self._retrieve_context(query)
-            if chunks:
-                context = "\n\n".join([c['content'] for c in chunks[:2]])
-                return (
-                    f"我找到了以下相关信息：\n\n{context}\n\n"
-                    f"关于您的问题「{query}」，建议参考以上资料。"
-                )
-        
-        return (
-            f"我理解您的问题是：「{query}」。\n\n"
-            "我可以为您提供以下帮助：\n"
-            "1. 行程规划建议 - 生成个性化的旅行计划\n"
-            "2. 目的地信息 - 景点、美食、文化等\n"
-            "3. 出行提示 - 天气、签证、交通等\n"
-            "4. 文案生成 - 为社交媒体创建旅行文案\n\n"
-            "请提供更多细节，我会尽力为您解答！"
-        )
 
     async def chat_with_history(
         self,
@@ -196,46 +167,43 @@ class QAAgent:
     ) -> str:
         """
         Chat with conversation history support.
-        
+
         Args:
             query: Current user query
             history: Conversation history (list of messages with role and content)
             use_rag: Whether to use RAG retrieval
-            
+
         Returns:
             Generated response
+
+        Raises:
+            Exception: When LLM is not available or generation fails
         """
-        try:
-            messages = []
-            
-            if use_rag:
-                context_chunks = self._retrieve_context(query)
-                if context_chunks:
-                    context = "\n\n".join([
-                        f"[来源: {c['source']} 第{c['page']}页]\n{c['content']}"
+        if self.llm_client is None:
+            raise Exception("LLM client is not initialized. Please check API configuration.")
+
+        messages = []
+
+        if use_rag:
+            context_chunks = self._retrieve_context(query)
+            if context_chunks:
+                context = "\n\n".join([
+                    f"[来源: {c['source']} 第{c['page']}页\n{c['content']}"
                         for c in context_chunks
                     ])
-                    messages.append(SystemMessage(content=RAG_SYSTEM_PROMPT))
-                    messages.append(SystemMessage(content=f"参考资料：\n{context}"))
-                else:
-                    messages.append(SystemMessage(content=GENERAL_SYSTEM_PROMPT))
-            else:
-                messages.append(SystemMessage(content=GENERAL_SYSTEM_PROMPT))
-            
-            for msg in history[-10:]:
-                if msg['role'] == 'user':
-                    messages.append(HumanMessage(content=msg['content']))
-                elif msg['role'] == 'assistant':
-                    messages.append(SystemMessage(content=msg['content']))
-            
-            messages.append(HumanMessage(content=query))
-            
-            if self.llm_client is None:
-                return self._fallback_response(query, use_rag)
-            
-            response = await LLMFactory.agenerate(self.llm_client, messages)
-            return response or self._fallback_response(query, use_rag)
-            
-        except Exception as e:
-            logger.error(f"Chat with history error: {e}")
-            return self._fallback_response(query, use_rag)
+                messages.append(HumanMessage(content=f"参考资料：\n{context}"))
+
+        for msg in history[-10:]:
+            if msg['role'] == 'user':
+                messages.append(HumanMessage(content=msg['content']))
+            elif msg['role'] == 'assistant':
+                messages.append(SystemMessage(content=msg['content']))
+
+        messages.append(HumanMessage(content=query))
+
+        response = await LLMFactory.agenerate(self.llm_client, messages)
+
+        if not response or not response.strip():
+            raise Exception("LLM returned empty response. Please try again.")
+
+        return response
