@@ -81,10 +81,10 @@ const formattedContent = computed(() => {
   })
 
   // 格式化列表项 - 无序列表
-  formatted = formatted.replace(/^\s*[-•]\s+(.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-teal-500 mt-1">•</span><span>$1</span></div>')
+  formatted = formatted.replace(/^\s*[-*]\s+(.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-teal-500 mt-1">&bull;</span><span>$1</span></div>')
 
   // 格式化列表项 - 编号列表
-  formatted = formatted.replace(/^\s*\d+\.\s+(.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-teal-500 mt-1 font-bold">$&</span><span>$1</span></div>')
+  formatted = formatted.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-teal-500 mt-1 font-bold">$1.</span><span>$2</span></div>')
 
   // 处理段落（空行分隔）
   formatted = formatted.replace(/\n\n+/g, '</p><p class="mb-2">')

@@ -67,7 +67,7 @@
 
       <template #body>
         <div class="max-w-4xl mx-auto space-y-6">
-          <div class="flex justify-center fade-in-up">
+          <div v-if="messages.length === 0" class="flex justify-center fade-in-up">
             <div class="glass-card p-6 max-w-2xl text-center">
               <div class="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg float-anim">
                 <AppIcon name="robot" size="lg" />

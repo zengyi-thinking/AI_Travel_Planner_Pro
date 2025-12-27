@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/utils/api'
 import type { ChatMessage, ChatSession } from '@/types/api'
+import { useAuthStore } from './auth'
 
 interface QaResponse<T = any> {
   success: boolean
@@ -43,12 +44,16 @@ export const useQaStore = defineStore('qa', () => {
   const messages = ref<ChatMessage[]>([])
   const isLoading = ref(false)
   const isTyping = ref(false)
+  const qaRequestTimeout = Number(import.meta.env.VITE_QA_TIMEOUT || 60000)
 
   const normalizeFeatures = (features?: QaFeatures) => ({
     knowledge_base: !!features?.knowledge_base,
     weather: !!features?.weather,
     voice: !!features?.voice
   })
+
+  const getResponsePayload = <T = any>(response: any): T | undefined =>
+    response?.data ?? response
 
   const shouldCreateNewSession = (features?: QaFeatures) => {
     if (!currentSession.value) return true
@@ -72,7 +77,7 @@ export const useQaStore = defineStore('qa', () => {
       const response = await api.post<any>('/qa/sessions', payload)
       console.log('Create session response:', response)
 
-      const sessionPayload = response.data?.session
+      const sessionPayload = getResponsePayload<{ session?: QaSessionResponse }>(response)?.session
       if (!sessionPayload) {
         return { success: false, error: '创建对话失败' }
       }
@@ -103,7 +108,7 @@ export const useQaStore = defineStore('qa', () => {
       const response = await api.get<any>('/qa/sessions', {
         params: { page, size }
       })
-      const items = response.data?.items || []
+      const items = getResponsePayload<{ items?: QaSessionResponse[] }>(response)?.items || []
       sessions.value = items.map((session: any) => ({
         id: session.id,
         user_id: 0,
@@ -125,7 +130,7 @@ export const useQaStore = defineStore('qa', () => {
       const response = await api.get<any>(`/qa/sessions/${sessionId}/messages`, {
         params: { page: 1, size: 50 }
       })
-      const items = response.data?.items || []
+      const items = getResponsePayload<{ items?: QaMessageResponse[] }>(response)?.items || []
       const session = sessions.value.find(s => s.id === sessionId)
       if (session) {
         currentSession.value = session
@@ -146,21 +151,23 @@ export const useQaStore = defineStore('qa', () => {
     }
   }
 
-  // 发送消息（非流式版本，确保基本功能正常）
+  // 发送消息（带流式显示效果）
   const sendMessage = async (content: string, options?: QaFeatures) => {
     if (!content.trim()) return { success: false, error: '内容不能为空' }
+
+    const authStore = useAuthStore()
+    const token = authStore.token
 
     console.log('===== sendMessage 开始 =====')
     console.log('Content:', content)
     console.log('Options:', options)
-    console.log('Token:', token.value)
+    console.log('Token:', token)
     console.log('CurrentSession:', currentSession.value)
 
     if (shouldCreateNewSession(options)) {
       console.log('需要创建新会话...')
       const created = await createSession(undefined, options)
       if (!created.success) {
-        console.error('创建会话失败:', created)
         return created
       }
     }
@@ -186,7 +193,19 @@ export const useQaStore = defineStore('qa', () => {
       timestamp: new Date().toISOString()
     }
     messages.value.push(userMessage)
-    console.log('已添加用户消息, 当前消息数:', messages.value.length)
+    console.log('已添加用户消息，当前消息数:', messages.value.length)
+
+    // 创建一个空白的助手消息
+    const assistantMessageId = Date.now() + 1
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      session_id: targetSessionId,
+      message_type: 'text',
+      created_at: new Date().toISOString()
+    }
+    messages.value.push(assistantMessage)
 
     try {
       console.log('发送API请求...')
@@ -195,64 +214,59 @@ export const useQaStore = defineStore('qa', () => {
         content,
         session_id: targetSessionId,
         message_type: 'text'
+      }, {
+        timeout: qaRequestTimeout
       })
 
       console.log('===== API 响应 =====')
-      console.log('响应类型:', typeof response)
       console.log('完整响应:', response)
-      console.log('响应keys:', Object.keys(response))
 
-      // 尝试不同的路径获取message
-      let messagePayload = null
+      // 获取助手回复内容
+      let assistantContent = ''
 
-      if (response?.data?.message) {
-        messagePayload = response.data.message
-        console.log('✓ 从 response.data.message 获取')
-      } else if (response?.message) {
-        messagePayload = response.message
+      const messagePayload = getResponsePayload<{ message?: QaMessageResponse }>(response)?.message
+
+      if (messagePayload?.content) {
+        assistantContent = messagePayload.content
+        console.log('✓ 从 response.message.content 获取')
+      } else if (messagePayload) {
+        assistantContent = typeof messagePayload === 'string' ? messagePayload : JSON.stringify(messagePayload)
         console.log('✓ 从 response.message 获取')
-      } else if (response?.data && typeof response.data === 'object') {
-        messagePayload = response.data
-        console.log('✓ 从 response.data 获取')
-      } else if (typeof response === 'object') {
-        messagePayload = response
-        console.log('✓ 从整个响应获取')
-      }
-
-      console.log('解析后的messagePayload:', messagePayload)
-
-      if (messagePayload) {
-        const newMessage = {
-          id: messagePayload.id || Date.now(),
-          role: messagePayload.role || 'assistant',
-          content: messagePayload.content || '',
-          session_id: messagePayload.session_id || targetSessionId,
-          message_type: messagePayload.message_type || 'text',
-          created_at: messagePayload.created_at || new Date().toISOString()
-        }
-        messages.value.push(newMessage)
-        console.log('✓ 已添加助手消息')
-        console.log('消息总数:', messages.value.length)
-        console.log('助手消息内容:', newMessage.content.substring(0, 100))
       } else {
-        console.error('✗ 未找到有效的消息payload')
-        console.error('完整响应:', JSON.stringify(response, null, 2))
+        console.error('无法提取消息内容')
+        assistantContent = '抱歉，我无法理解您的请求。'
       }
 
-      console.log('===== sendMessage 完成 =====')
+      console.log('助手回复:', assistantContent.substring(0, 100))
+
+      // 只更新当前请求对应的占位消息，避免并发错位
+      const targetMessage = messages.value.find(msg => msg.id === assistantMessageId)
+      if (targetMessage) {
+        targetMessage.content = assistantContent
+        console.log('✓ 已更新助手消息')
+      }
+
+      isTyping.value = false
+      console.log('✓ 消息发送成功')
       return { success: true }
     } catch (error) {
       console.error('===== 发送消息失败 =====')
-      console.error('错误类型:', error.constructor.name)
+      console.error('错误类型:', (error as any).constructor.name)
       console.error('错误信息:', (error as any).message)
-      console.error('错误详情:', error)
-      console.error('API错误:', (error as any).response?.data)
+      console.error('完整错误:', error)
 
+      // 移除空白的助手消息
+      const targetIndex = messages.value.findIndex(msg => msg.id === assistantMessageId)
+      if (targetIndex >= 0 && !messages.value[targetIndex].content) {
+        messages.value.splice(targetIndex, 1)
+        console.log('已移除空白助手消息')
+      }
+
+      isTyping.value = false
       return { success: false, error: '发送消息失败' }
     } finally {
-      isTyping.value = false
       isLoading.value = false
-      console.log('isLoading 和 isTyping 已重置为 false')
+      console.log('isLoading 已重置为 false')
     }
   }
 
