@@ -87,12 +87,21 @@ class QAAgent:
         Returns:
             List of retrieved chunks with metadata
         """
-        retriever = self._get_retriever()
-        if not retriever:
+        if not self.enable_rag:
+            return []
+
+        kb = self._get_knowledge_base()
+        if not kb:
             return []
 
         try:
-            chunks = retriever.retrieve(query, top_k=self.top_k)
+            retrieval = kb.retrieve(query, top_k=self.top_k)
+            chunks = retrieval.chunks
+            if chunks:
+                sources = [f"{chunk.source}#p{chunk.page}" for chunk in chunks]
+                logger.info("RAG retrieved %s chunks for query '%s': %s", len(chunks), query, sources)
+            else:
+                logger.info("RAG retrieved 0 chunks for query '%s'", query)
             return [
                 {
                     "content": chunk.content,
