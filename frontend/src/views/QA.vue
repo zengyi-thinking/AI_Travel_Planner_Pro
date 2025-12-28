@@ -158,7 +158,7 @@ const qaStore = useQaStore()
 const { messages } = storeToRefs(qaStore)
 
 const inputMessage = ref('')
-const knowledgeEnabled = ref(true)
+const knowledgeEnabled = ref(false)
 const weatherEnabled = ref(false)
 const voiceEnabled = ref(false)
 

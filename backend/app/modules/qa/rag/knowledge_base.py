@@ -11,17 +11,21 @@ import re
 import json
 import hashlib
 import pickle
+import asyncio
+import os
 
 import httpx
 from PyPDF2 import PdfReader
 
 from app.core.config.settings import settings
 from app.modules.qa.rag.vector_store import BM25VectorStore, Chunk, tokenize
+import logging
 from app.modules.qa.rag.retriever import Retriever
 
 
 
 _CJK_PATTERN = re.compile(r"[\u4e00-\u9fff]")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -33,19 +37,19 @@ class KnowledgeBase:
     def __init__(
         self,
         dataset_dir: Optional[Path] = None,
-        chunk_size: int = 800,
-        chunk_overlap: int = 100,
-        max_pages: int = 30,
-        max_docs: int = 5
+        chunk_size: int = 1200,
+        chunk_overlap: int = 50,
+        max_pages: int = 5,
+        max_docs: int = 1
     ):
         self.dataset_dir = dataset_dir or Path(__file__).resolve().parents[4] / "dataset"
         self.cache_dir = Path(__file__).resolve().parents[4] / ".cache" / "qa_rag"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         (self.cache_dir / "texts").mkdir(parents=True, exist_ok=True)
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.max_pages = max_pages
-        self.max_docs = max_docs
+        self.chunk_size = int(os.getenv("RAG_CHUNK_SIZE", chunk_size))
+        self.chunk_overlap = int(os.getenv("RAG_CHUNK_OVERLAP", chunk_overlap))
+        self.max_pages = int(os.getenv("RAG_MAX_PAGES", max_pages))
+        self.max_docs = int(os.getenv("RAG_MAX_DOCS", max_docs))
         self._chunks: List[Chunk] = []
         self._store: Optional[BM25VectorStore] = None
         self._retriever: Optional[Retriever] = None
@@ -60,6 +64,17 @@ class KnowledgeBase:
         pdfs = self._list_pdfs()
         if not pdfs:
             return []
+
+        # Fast path: direct name match
+        exact_matches = []
+        query_lower = query.lower()
+        for pdf in pdfs:
+            name = pdf.stem
+            name_lower = name.lower()
+            if name_lower and (name_lower in query_lower or query_lower in name_lower):
+                exact_matches.append(pdf)
+        if exact_matches:
+            return exact_matches[: self.max_docs]
 
         query_tokens = set(tokenize(query))
         ranked = []
@@ -143,6 +158,8 @@ class KnowledgeBase:
         return chunks
 
     def _build_index(self, pdfs: List[Path]) -> None:
+        if pdfs:
+            logger.info("RAG indexing %s document(s): %s", len(pdfs), [p.stem for p in pdfs])
         chunks: List[Chunk] = []
         for pdf in pdfs:
             text = self._read_pdf_text(pdf)
@@ -150,6 +167,33 @@ class KnowledgeBase:
         self._chunks = chunks
         self._store = BM25VectorStore(chunks)
         self._retriever = Retriever(self._store)
+        logger.info("RAG index ready with %s chunks", len(self._chunks))
+
+    def prewarm(self, doc_names: List[str]) -> None:
+        names = [name.strip() for name in doc_names if name and name.strip()]
+        if not names:
+            return
+        pdfs = self._list_pdfs()
+        if not pdfs:
+            return
+        matched = []
+        for name in names:
+            name_lower = name.lower()
+            for pdf in pdfs:
+                if pdf.stem.lower() == name_lower:
+                    matched.append(pdf)
+                    break
+            else:
+                for pdf in pdfs:
+                    if name_lower in pdf.stem.lower():
+                        matched.append(pdf)
+                        break
+        if not matched:
+            return
+        self._build_index(matched[: self.max_docs])
+
+    async def prewarm_async(self, doc_names: List[str]) -> None:
+        await asyncio.to_thread(self.prewarm, doc_names)
 
     def _index_signature(self, pdfs: List[Path]) -> Tuple[str, Dict[str, object]]:
         files = []

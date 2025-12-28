@@ -7,10 +7,11 @@ It sets up the FastAPI app, configures middleware, and registers all API routes.
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 import logging
 import sys
+import os
+import asyncio
 
 from app.core.config import settings
 from app.core.db.session import init_db
@@ -19,6 +20,7 @@ from app.modules.users.api.settings import router as users_settings_router
 from app.modules.planner.api.v1 import router as planner_router
 from app.modules.qa.api.v1 import router as qa_router
 from app.modules.copywriter.api.v1 import router as copywriter_router
+from app.modules.qa.rag.knowledge_base import get_knowledge_base
 
 # 设置stdout和stderr的编码为UTF-8
 if sys.platform == 'win32':
@@ -62,7 +64,6 @@ app = FastAPI(
 )
 
 # Add middleware
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
@@ -93,6 +94,12 @@ async def startup_event():
     
     await init_db()
     logger.info("Database initialized successfully")
+
+    prewarm_docs = [item.strip() for item in os.getenv("RAG_PREWARM_DOCS", "").split(",") if item.strip()]
+    if prewarm_docs:
+        kb = get_knowledge_base()
+        asyncio.create_task(kb.prewarm_async(prewarm_docs))
+        logger.info("RAG prewarm started for: %s", prewarm_docs)
 
 
 @app.get("/")

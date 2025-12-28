@@ -10,6 +10,8 @@ from app.common.dtos.base import ResponseDTO, PaginationDTO
 from app.modules.qa.schemas.chat_schema import ChatCreate, ChatResponse, MessageCreate, MessageResponse
 from app.modules.qa.services.chat_service import ChatService
 from app.modules.qa.tools.weather import query_weather as query_weather_tool
+from app.core.config import settings
+import asyncio
 import json
 import logging
 
@@ -145,7 +147,14 @@ async def send_message(
     """非流式发送消息（备用接口）"""
     service = ChatService(db)
     try:
-        message = await service.send_message(current_user.id, message_data)
+        timeout_seconds = settings.AI_TIMEOUT or 60
+        message = await asyncio.wait_for(
+            service.send_message(current_user.id, message_data),
+            timeout=timeout_seconds
+        )
+    except asyncio.TimeoutError:
+        logger.error("QA message timeout after %ss", timeout_seconds)
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="QA response timeout")
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
