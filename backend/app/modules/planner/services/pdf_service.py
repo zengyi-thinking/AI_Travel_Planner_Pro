@@ -101,6 +101,16 @@ class PDFExportService:
             textColor=colors.HexColor('#7F8C8D')
         ))
 
+        # Table cell style with word wrapping
+        self.styles.add(ParagraphStyle(
+            name='TableCell',
+            parent=self.styles['BodyText'],
+            fontName=self.font_name,
+            fontSize=9,
+            leading=12,
+            wordWrap='CJK'
+        ))
+
     def generate_itinerary_pdf(self, itinerary: Dict[str, Any]) -> bytes:
         """
         Generate PDF from itinerary data
@@ -205,11 +215,11 @@ class PDFExportService:
     def _create_basic_info_table(self, itinerary: Dict[str, Any]) -> Table:
         """Create basic information table"""
         data = [
-            ['目的地:', itinerary.get('destination', '-')],
-            ['出发地:', itinerary.get('departure', '未指定')],
-            ['天数:', f"{itinerary.get('days', 0)} 天"],
-            ['预算:', f"¥{itinerary.get('budget', 0)}"],
-            ['旅行风格:', self._get_travel_style_label(itinerary.get('travel_style', 'leisure'))],
+            [Paragraph('目的地:', self.styles['BodyCN']), Paragraph(self._safe_str(itinerary.get('destination')), self.styles['TableCell'])],
+            [Paragraph('出发地:', self.styles['BodyCN']), Paragraph(self._safe_str(itinerary.get('departure'), '未指定'), self.styles['TableCell'])],
+            [Paragraph('天数:', self.styles['BodyCN']), Paragraph(f"{itinerary.get('days', 0)} 天", self.styles['TableCell'])],
+            [Paragraph('预算:', self.styles['BodyCN']), Paragraph(f"¥{itinerary.get('budget', 0)}", self.styles['TableCell'])],
+            [Paragraph('旅行风格:', self.styles['BodyCN']), Paragraph(self._get_travel_style_label(itinerary.get('travel_style', 'leisure')), self.styles['TableCell'])],
         ]
 
         table = Table(data, colWidths=[4*cm, 10*cm])
@@ -246,23 +256,25 @@ class PDFExportService:
 
         # Activities
         if day_plan.get('activities'):
-            activities_data = [['时间', '活动', '描述', '费用']]
+            activities_data = [
+                [Paragraph('时间', self.styles['BodyCN']), Paragraph('活动', self.styles['BodyCN']), Paragraph('描述', self.styles['BodyCN']), Paragraph('费用', self.styles['BodyCN'])]
+            ]
             for activity in day_plan['activities']:
                 activities_data.append([
-                    activity.get('time', '-'),
-                    activity.get('title', '-'),
-                    activity.get('description', '')[:50] + '...' if len(activity.get('description', '')) > 50 else activity.get('description', ''),
-                    f"¥{activity.get('average_cost', 0)}"
+                    Paragraph(self._safe_str(activity.get('time')), self.styles['TableCell']),
+                    Paragraph(self._safe_str(activity.get('title')), self.styles['TableCell']),
+                    Paragraph(self._safe_str(activity.get('description')), self.styles['TableCell']),
+                    Paragraph(f"¥{activity.get('average_cost', 0)}", self.styles['TableCell'])
                 ])
 
-            activities_table = Table(activities_data, colWidths=[2*cm, 4*cm, 6*cm, 2*cm])
+            activities_table = Table(activities_data, colWidths=[2.5*cm, 3.5*cm, 5*cm, 2*cm])
             activities_table.setStyle(TableStyle([
                 ('FONTNAME', (0, 0), (-1, -1), self.font_name),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498DB')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('LEFTPADDING', (0, 0), (-1, -1), 6),
                 ('RIGHTPADDING', (0, 0), (-1, -1), 6),
                 ('TOPPADDING', (0, 0), (-1, -1), 6),
@@ -283,13 +295,13 @@ class PDFExportService:
     def _create_cost_table(self, cost_breakdown: Dict[str, Any]) -> Table:
         """Create cost breakdown table"""
         data = [
-            ['项目', '金额'],
-            ['交通', f"¥{cost_breakdown.get('transportation', 0)}"],
-            ['住宿', f"¥{cost_breakdown.get('accommodation', 0)}"],
-            ['餐饮', f"¥{cost_breakdown.get('food', 0)}"],
-            ['门票', f"¥{cost_breakdown.get('tickets', 0)}"],
-            ['购物', f"¥{cost_breakdown.get('shopping', 0)}"],
-            ['其他', f"¥{cost_breakdown.get('other', 0)}"],
+            [Paragraph('项目', self.styles['BodyCN']), Paragraph('金额', self.styles['BodyCN'])],
+            [Paragraph('交通', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('transportation', 0)}", self.styles['TableCell'])],
+            [Paragraph('住宿', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('accommodation', 0)}", self.styles['TableCell'])],
+            [Paragraph('餐饮', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('food', 0)}", self.styles['TableCell'])],
+            [Paragraph('门票', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('tickets', 0)}", self.styles['TableCell'])],
+            [Paragraph('购物', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('shopping', 0)}", self.styles['TableCell'])],
+            [Paragraph('其他', self.styles['TableCell']), Paragraph(f"¥{cost_breakdown.get('other', 0)}", self.styles['TableCell'])],
         ]
 
         table = Table(data, colWidths=[8*cm, 6*cm])
@@ -352,6 +364,14 @@ class PDFExportService:
                 content.append(Paragraph(f"• {other_tip}", self.styles['BodyCN']))
 
         return content
+
+    def _safe_str(self, value: Any, default: str = '-') -> str:
+        """Convert value to safe string, handle None and non-string values"""
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value if value.strip() else default
+        return str(value) if value else default
 
     def _get_travel_style_label(self, style: str) -> str:
         """Get travel style label"""
