@@ -173,7 +173,9 @@ class PlanService:
                         # 跳过无效的活动
                         continue
                 else:
-                    activities.append(act)
+                    # 旧数据可能存了非结构化内容，跳过以避免响应校验失败
+                    logger.warning("Skipping non-dict activity payload in itinerary %s", itinerary.id)
+                    continue
 
             day_plan = DayPlan(
                 day_number=day_model.day_number,
@@ -189,6 +191,9 @@ class PlanService:
 
         # 获取metadata
         metadata = itinerary.metadata_json or {}
+
+        # 确保cost_breakdown包含所有必需字段，避免响应校验失败
+        cost_breakdown = self._normalize_cost_breakdown(metadata.get("cost_breakdown"))
 
         # 构建response
         response_dict = {
@@ -208,7 +213,7 @@ class PlanService:
             "best_season": metadata.get("best_season"),
             "weather": metadata.get("weather"),
             "actual_cost": metadata.get("actual_cost"),
-            "cost_breakdown": metadata.get("cost_breakdown"),
+            "cost_breakdown": cost_breakdown,
             "preparation": metadata.get("preparation"),
             "tips": metadata.get("tips"),
             "days_detail": days_detail,
@@ -334,7 +339,8 @@ class PlanService:
                         logger.warning(f"Failed to parse activity {act.get('title')}: {e}")
                         continue
                 else:
-                    activities.append(act)
+                    logger.warning("Skipping non-dict activity payload in itinerary %s", itinerary_id)
+                    continue
 
             day_plan = DayPlan(
                 day_number=day_model.day_number,
@@ -352,16 +358,7 @@ class PlanService:
         metadata = updated_itinerary.metadata_json or {}
 
         # 确保cost_breakdown包含所有必需字段
-        cost_breakdown = metadata.get("cost_breakdown")
-        if cost_breakdown and isinstance(cost_breakdown, dict):
-            cost_breakdown = {
-                "transportation": cost_breakdown.get("transportation", 0),
-                "accommodation": cost_breakdown.get("accommodation", 0),
-                "food": cost_breakdown.get("food", 0),
-                "tickets": cost_breakdown.get("tickets", 0),
-                "shopping": cost_breakdown.get("shopping", 0),
-                "other": cost_breakdown.get("other", 0)
-            }
+        cost_breakdown = self._normalize_cost_breakdown(metadata.get("cost_breakdown"))
 
         # 构建response（与generate_detail_itinerary相同的格式）
         response_dict = {
@@ -390,6 +387,44 @@ class PlanService:
         }
 
         return PlanResponse(**response_dict)
+
+    @staticmethod
+    def _normalize_cost_breakdown(cost_breakdown):
+        if cost_breakdown and isinstance(cost_breakdown, dict):
+            key_map = {
+                "transportation": "transportation",
+                "accommodation": "accommodation",
+                "food": "food",
+                "tickets": "tickets",
+                "shopping": "shopping",
+                "other": "other",
+                "交通费用": "transportation",
+                "交通费": "transportation",
+                "住宿费用": "accommodation",
+                "住宿费": "accommodation",
+                "餐饮费用": "food",
+                "餐饮费": "food",
+                "门票费用": "tickets",
+                "门票费": "tickets",
+                "购物费用": "shopping",
+                "购物费": "shopping",
+                "其他费用": "other",
+                "其他费": "other"
+            }
+            normalized = {}
+            for key, value in cost_breakdown.items():
+                mapped = key_map.get(key)
+                if mapped:
+                    normalized[mapped] = value
+            return {
+                "transportation": normalized.get("transportation", cost_breakdown.get("transportation", 0)),
+                "accommodation": normalized.get("accommodation", cost_breakdown.get("accommodation", 0)),
+                "food": normalized.get("food", cost_breakdown.get("food", 0)),
+                "tickets": normalized.get("tickets", cost_breakdown.get("tickets", 0)),
+                "shopping": normalized.get("shopping", cost_breakdown.get("shopping", 0)),
+                "other": normalized.get("other", cost_breakdown.get("other", 0))
+            }
+        return cost_breakdown
 
     async def get_user_itineraries(
         self,
