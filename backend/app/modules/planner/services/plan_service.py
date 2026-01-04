@@ -81,11 +81,17 @@ class PlanService:
             departure=itinerary.departure
         )
 
+        logger.info(f"🎯 AI生成完成，开始添加地理坐标")
+        logger.info(f"📋 AI返回数据类型: {type(result)}")
+        logger.info(f"📋 AI返回keys: {result.keys() if isinstance(result, dict) else 'N/A'}")
+
         # 为行程添加地理坐标
         result = await self._enrich_itinerary_with_coordinates(
             result,
             itinerary.destination
         )
+
+        logger.info(f"✅ 地理坐标添加流程完成")
 
         # 清除旧的DayDetail数据
         await self.plan_dao.delete_day_details(itinerary_id)
@@ -435,20 +441,30 @@ class PlanService:
         """
         from app.services.baidu_geocoding_service import BaiduGeocodingService
 
+        logger.info(f"🗺️ 开始添加地理坐标，目的地: {destination}")
+        logger.info(f"📊 行程数据包含 {len(itinerary.get('days', []))} 天")
+
         geocoding_service = BaiduGeocodingService()
         days_data = itinerary.get('days', [])
+
+        total_activities = 0
+        successful_coords = 0
 
         for day_data in days_data:
             activities = day_data.get('activities', [])
 
             for activity in activities:
+                total_activities += 1
+
                 # 跳过已经有坐标的活动
                 if activity.get('coordinates'):
+                    logger.info(f"⊘ 活动已有坐标，跳过: {activity.get('title')}")
                     continue
 
                 # 提取地址信息（优先级：location > title）
                 address = activity.get('location') or activity.get('title')
                 if not address:
+                    logger.warning(f"⚠️ 活动无地址信息: {activity.get('title')}")
                     continue
 
                 try:
@@ -463,6 +479,7 @@ class PlanService:
                             'lng': coords['lng'],
                             'lat': coords['lat']
                         }
+                        successful_coords += 1
                         logger.info(f"✅ 已获取坐标: {address} -> ({coords['lng']}, {coords['lat']})")
                     else:
                         logger.warning(f"⚠️ 未找到坐标: {address}")
@@ -472,5 +489,5 @@ class PlanService:
                     # 失败时继续处理下一个活动
                     continue
 
-        logger.info(f"📍 地理坐标添加完成")
+        logger.info(f"📍 地理坐标添加完成: {successful_coords}/{total_activities} 个活动成功获取坐标")
         return itinerary

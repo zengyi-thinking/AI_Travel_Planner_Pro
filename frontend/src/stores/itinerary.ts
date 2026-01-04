@@ -82,6 +82,28 @@ export const useItineraryStore = defineStore('itinerary', () => {
         `/api/v1/planner/itineraries/${itineraryId}/generate-detail`,
         { use_strict_json: useStrictJson }
       )
+
+      // 🔍 调试：检查返回数据是否包含坐标
+      console.log('📍 [API] 详细行程生成完成')
+      console.log('📍 [API] 行程ID:', response.id)
+      console.log('📍 [API] days_detail数量:', response.days_detail?.length || 0)
+
+      if (response.days_detail) {
+        response.days_detail.forEach((day, dayIndex) => {
+          console.log(`📍 [API] 第${dayIndex + 1}天: ${day.title}, 活动数: ${day.activities?.length || 0}`)
+
+          if (day.activities) {
+            day.activities.forEach((activity, actIndex) => {
+              const hasCoords = activity.coordinates && activity.coordinates.lat && activity.coordinates.lng
+              console.log(`  ${actIndex + 1}. ${activity.title}: ${hasCoords ? '✅有坐标' : '❌无坐标'}`)
+              if (hasCoords) {
+                console.log(`     坐标: (${activity.coordinates.lat}, ${activity.coordinates.lng})`)
+              }
+            })
+          }
+        })
+      }
+
       if (currentItinerary.value?.id === itineraryId) {
         currentItinerary.value = response
       }

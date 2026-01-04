@@ -24,9 +24,9 @@
 
     <!-- 地图控制面板 -->
     <div v-if="!loading && !error && map" class="map-controls">
-      <!-- 图例 -->
+      <!-- 活动类型图例 -->
       <div class="legend-panel">
-        <h5>图例</h5>
+        <h5>活动类型</h5>
         <div class="legend-items">
           <div class="legend-item" @click="toggleLayer('attraction')">
             <span class="legend-icon attraction" :class="{ active: layers.attraction }">
@@ -51,6 +51,24 @@
               <AppIcon name="car" size="sm" />
             </span>
             <span>交通</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 路线颜色图例 -->
+      <div v-if="itinerary?.days_detail && itinerary.days_detail.length > 1" class="legend-panel">
+        <h5>路线颜色</h5>
+        <div class="route-legend">
+          <div
+            v-for="day in itinerary.days_detail"
+            :key="day.day_number"
+            class="route-legend-item"
+          >
+            <span
+              class="route-color-dot"
+              :style="{ backgroundColor: getDayRouteColor(day.day_number) }"
+            ></span>
+            <span>第{{ day.day_number }}天</span>
           </div>
         </div>
       </div>
@@ -257,7 +275,13 @@ async function initMap() {
  * 添加标记点和路线
  */
 function addMarkersAndRoutes() {
-  if (!map.value || !props.itinerary?.days_detail) return
+  if (!map.value || !props.itinerary?.days_detail) {
+    console.warn('地图或行程数据未就绪')
+    return
+  }
+
+  console.log('🗺️ 开始添加标记点和路线')
+  console.log('行程数据:', props.itinerary)
 
   // 清除旧的标记和路线
   clearMarkersAndRoutes()
@@ -266,49 +290,125 @@ function addMarkersAndRoutes() {
     ? props.itinerary.days_detail.filter(d => d.day_number === selectedDay.value)
     : props.itinerary.days_detail
 
-  const allCoordinates: [number, number][] = []
-  const allActivities: Array<{ activity: Activity; position: [number, number] }> = []
+  console.log(`选中天数: ${selectedDay.value || '全部'}, 共 ${dayPlans.length} 天`)
+
+  // 为每一天定义不同的路线颜色
+  const dayColors = [
+    '#ef4444', // 第1天 - 红色
+    '#3b82f6', // 第2天 - 蓝色
+    '#10b981', // 第3天 - 绿色
+    '#f59e0b', // 第4天 - 橙色
+    '#8b5cf6', // 第5天 - 紫色
+    '#ec4899', // 第6天 - 粉色
+    '#06b6d4', // 第7天 - 青色
+  ]
 
   // 遍历每一天
-  dayPlans.forEach(dayPlan => {
-    dayPlan.activities.forEach(activity => {
-      if (!activity.coordinates || !layers.value[activity.type]) return
+  dayPlans.forEach((dayPlan, dayIndex) => {
+    if (!dayPlan.activities) {
+      console.warn(`第${dayPlan.day_number}天没有活动数据`)
+      return
+    }
 
+    console.log(`\n处理第${dayPlan.day_number}天: ${dayPlan.title}, 活动数: ${dayPlan.activities.length}`)
+
+    const dayCoordinates: [number, number][] = []
+
+    // 处理这一天的活动
+    dayPlan.activities.forEach((activity, actIndex) => {
+      // 跳过没有坐标的活动
+      if (!activity.coordinates || !activity.coordinates.lat || !activity.coordinates.lng) {
+        console.warn(`  ⚠️ 活动缺少坐标: ${activity.title}`)
+        return
+      }
+
+      // 获取活动类型，如果没有则默认为 attraction
+      const activityType = activity.type || 'attraction'
+
+      // 检查图层是否启用
+      if (!layers.value[activityType]) {
+        console.log(`  ⊘ 图层已禁用: ${activityType}`)
+        return
+      }
+
+      // Leaflet 使用 [lat, lng] 格式
       const position: [number, number] = [activity.coordinates.lat, activity.coordinates.lng]
-      allCoordinates.push(position)
-      allActivities.push({ activity, position })
+      dayCoordinates.push(position)
 
-      // 创建自定义图标
-      const icon = createCustomIcon(activity.type)
+      try {
+        // 创建自定义图标
+        const icon = createCustomIcon(activityType)
 
-      // 创建标记
-      const marker = L.marker(position, { icon })
-        .addTo(map.value!)
+        // 创建标记
+        const marker = L.marker(position, { icon })
+          .addTo(map.value!)
 
-      // 绑定点击事件
-      marker.on('click', () => showActivityPopup(activity, marker))
+        // 绑定点击事件
+        marker.on('click', () => showActivityPopup(activity, marker))
 
-      markers.value.push(marker)
+        markers.value.push(marker)
+
+        console.log(`  ✅ 添加标记: ${activity.title} (${position[0].toFixed(4)}, ${position[1].toFixed(4)})`)
+      } catch (error) {
+        console.error(`  ❌ 创建标记失败: ${activity.title}`, error)
+      }
     })
+
+    // 为这一天绘制路线（使用不同颜色）
+    if (dayCoordinates.length > 1) {
+      try {
+        const colorIndex = (dayPlan.day_number - 1) % dayColors.length
+        const routeColor = dayColors[colorIndex]
+
+        const polyline = L.polyline(dayCoordinates, {
+          color: routeColor,
+          weight: 5,
+          opacity: 0.8,
+          dashArray: '8, 8'
+        }).addTo(map.value!)
+
+        polylines.value.push(polyline)
+        console.log(`  🔗 绘制第${dayPlan.day_number}天路线: ${routeColor}, ${dayCoordinates.length}个点`)
+      } catch (error) {
+        console.error(`  ❌ 绘制第${dayPlan.day_number}天路线失败:`, error)
+      }
+    } else if (dayCoordinates.length === 1) {
+      console.log(`  📍 第${dayPlan.day_number}天只有1个标记点`)
+    } else {
+      console.warn(`  ⚠️ 第${dayPlan.day_number}天没有有效标记点`)
+    }
   })
 
-  // 绘制路线（按顺序连接）
-  if (allCoordinates.length > 1) {
-    const polyline = L.polyline(allCoordinates, {
-      color: '#14b8a6',
-      weight: 4,
-      opacity: 0.7,
-      dashArray: '10, 10'
-    }).addTo(map.value!)
+  console.log(`\n📊 总计添加: ${markers.value.length} 个标记, ${polylines.value.length} 条路线`)
 
-    polylines.value.push(polyline)
-
-    // 调整地图视图以显示所有标记
-    map.value.fitBounds(polyline.getBounds(), { padding: [50, 50] })
-  } else if (allCoordinates.length === 1) {
-    // 如果只有一个点，居中显示
-    map.value.setView(allCoordinates[0], 14)
+  // 调整地图视图以显示所有标记
+  if (markers.value.length > 0) {
+    try {
+      const group = new L.FeatureGroup(markers.value)
+      map.value.fitBounds(group.getBounds(), { padding: [50, 50] })
+      console.log('✅ 地图视图已调整')
+    } catch (error) {
+      console.error('❌ 调整地图视图失败:', error)
+    }
+  } else {
+    console.warn('⚠️ 没有标记点，无法调整视图')
   }
+}
+
+/**
+ * 获取每天的路线颜色
+ */
+function getDayRouteColor(dayNumber: number): string {
+  const dayColors = [
+    '#ef4444', // 第1天 - 红色
+    '#3b82f6', // 第2天 - 蓝色
+    '#10b981', // 第3天 - 绿色
+    '#f59e0b', // 第4天 - 橙色
+    '#8b5cf6', // 第5天 - 紫色
+    '#ec4899', // 第6天 - 粉色
+    '#06b6d4', // 第7天 - 青色
+  ]
+  return dayColors[(dayNumber - 1) % dayColors.length]
 }
 
 /**
@@ -572,6 +672,28 @@ onUnmounted(() => {
 .legend-icon.meal { background: #f59e0b; }
 .legend-icon.accommodation { background: #3b82f6; }
 .legend-icon.transport { background: #8b5cf6; }
+
+/* 路线颜色图例 */
+.route-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.route-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.route-color-dot {
+  width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
 
 .day-buttons {
   display: flex;

@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import InteractiveMap from '@/components/planner/InteractiveMap.vue'
@@ -66,17 +66,34 @@ const itineraryStore = useItineraryStore()
 const itinerary = computed(() => itineraryStore.currentItinerary)
 const isFullscreen = ref(false)
 
+// 添加调试日志
+watch(itinerary, (newVal) => {
+  console.log('📍 MapPreview: itinerary 数据变化', newVal)
+  console.log('📍 days_detail:', newVal?.days_detail)
+  console.log('📍 hasCoordinates:', hasCoordinates.value)
+}, { deep: true })
+
 /**
  * 检查行程是否包含坐标数据
  */
 const hasCoordinates = computed(() => {
-  if (!itinerary.value?.days_detail) return false
+  if (!itinerary.value?.days_detail) {
+    console.log('⚠️ MapPreview: 没有 days_detail')
+    return false
+  }
 
-  return itinerary.value.days_detail.some(day =>
-    day.activities?.some(activity =>
-      activity.coordinates && activity.coordinates.lat && activity.coordinates.lng
-    )
+  const hasCoords = itinerary.value.days_detail.some(day =>
+    day.activities?.some(activity => {
+      const has = activity.coordinates && activity.coordinates.lat && activity.coordinates.lng
+      if (!has) {
+        console.log(`⚠️ 活动 ${activity.title} 缺少坐标`)
+      }
+      return has
+    })
   )
+
+  console.log(`📍 hasCoordinates: ${hasCoords}`)
+  return hasCoords
 })
 
 /**
@@ -89,12 +106,14 @@ function toggleFullscreen() {
 
 <style scoped>
 .map-preview-wrapper {
-  @apply w-full bg-white rounded-2xl shadow-lg overflow-hidden;
+  @apply w-full bg-white rounded-xl shadow-md overflow-hidden;
+  border: 1px solid #e2e8f0;
 }
 
 .map-header {
-  @apply flex items-center justify-between px-6 py-4 border-b border-slate-100;
+  @apply flex items-center justify-between px-4 py-2 border-b border-slate-100;
   background: linear-gradient(to right, #f8fafc, #ffffff);
+  min-height: 48px;
 }
 
 .header-left {
@@ -102,11 +121,13 @@ function toggleFullscreen() {
 }
 
 .map-title {
-  @apply text-lg font-bold text-slate-800 mb-1;
+  @apply text-sm font-bold text-slate-800 mb-0;
+  font-size: 14px;
 }
 
 .map-subtitle {
-  @apply text-sm text-slate-500;
+  @apply text-xs text-slate-500;
+  font-size: 12px;
 }
 
 .header-right {
@@ -116,21 +137,23 @@ function toggleFullscreen() {
 .map-container-wrapper {
   @apply relative w-full;
   transition: all 0.3s ease;
+  min-height: 320px;
 }
 
 .map-container-wrapper.fullscreen {
   @apply fixed inset-0 z-50 bg-white;
   border-radius: 0;
+  min-height: 100vh;
 }
 
 .map-empty-state {
   @apply absolute inset-0 flex flex-col items-center justify-center bg-slate-50;
-  min-height: 400px;
+  min-height: 320px;
 }
 
 .map-no-coordinates {
   @apply absolute inset-0 flex flex-col items-center justify-center bg-amber-50;
-  min-height: 300px;
+  min-height: 320px;
 }
 
 /* 全屏模式下添加关闭按钮 */

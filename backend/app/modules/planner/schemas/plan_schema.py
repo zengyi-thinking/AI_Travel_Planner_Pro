@@ -55,11 +55,10 @@ class Activity(BaseModel):
     transportation: Optional[TransportationInfo] = Field(None, description="到达方式")
     parking_info: Optional[str] = Field(None, description="停车信息")
 
-    # 技术数据（用于地图，默认不序列化）
+    # 技术数据（用于地图展示）
     coordinates: Optional[Dict[str, float]] = Field(
         None,
-        exclude=True,  # 序列化时排除，用户不可见
-        description="经纬度坐标（仅用于地图展示）"
+        description="经纬度坐标（用于地图展示）"
     )
 
 
