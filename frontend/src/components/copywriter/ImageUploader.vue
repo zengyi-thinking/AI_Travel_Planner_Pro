@@ -16,6 +16,7 @@
         type="file"
         class="hidden"
         accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
         @change="handleFileSelect"
       >
       <AppIcon name="cloud-upload-alt" size="xl" class="mb-2 group-hover:scale-110 transition-transform" />
@@ -116,3 +117,4 @@ const removeImage = (index: number) => {
   copywritingStore.removeImage(index)
 }
 </script>
+

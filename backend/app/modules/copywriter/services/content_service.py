@@ -49,47 +49,50 @@ class ContentService:
         image_description = None
 
         # 步骤 1: 如果有图片，先分析图片获取描述和关键词
+        images_base64 = []
         if images:
-            logger.info(f"Analyzing {len(images)} image(s)...")
-            image_url = images[0]
-            image_base64 = None
+            logger.info(f"Processing {len(images)} image(s)...")
             
-            # 将本地图片转为 base64（因为视觉 API 无法访问 localhost）
-            if image_url.startswith("http://localhost") or image_url.startswith("/static/"):
-                import os
-                import base64
-                # 从 URL 提取文件路径
-                if "/static/uploads/" in image_url:
-                    file_path = image_url.split("/static/uploads/")[-1]
-                    full_path = os.path.join("static/uploads", file_path)
-                    if os.path.exists(full_path):
-                        with open(full_path, "rb") as f:
-                            image_base64 = base64.b64encode(f.read()).decode("utf-8")
-                            logger.info(f"Image converted to base64: {len(image_base64)} chars")
+            # 将所有图片转为 base64
+            import os
+            import base64
+            for image_url in images:
+                if image_url.startswith("http://localhost") or image_url.startswith("/static/"):
+                    # 从 URL 提取文件路径
+                    if "/static/uploads/" in image_url:
+                        file_path = image_url.split("/static/uploads/")[-1]
+                        full_path = os.path.join("static/uploads", file_path)
+                        if os.path.exists(full_path):
+                            with open(full_path, "rb") as f:
+                                img_b64 = base64.b64encode(f.read()).decode("utf-8")
+                                images_base64.append(img_b64)
+                                logger.info(f"Image converted to base64: {len(img_b64)} chars")
+            
+            # 使用第一张图片获取描述和关键词（用于快速分析）
+            if images_base64:
+                # 获取图片描述
+                analysis_result = await self.vision_service.analyze_image(
+                    image_base64=images_base64[0],
+                    prompt=CopywritingPrompts.generate_image_analysis_prompt(for_keywords=False)
+                )
 
-            # 获取图片描述
-            analysis_result = await self.vision_service.analyze_image(
-                image_base64=image_base64,
-                prompt=CopywritingPrompts.generate_image_analysis_prompt(for_keywords=False)
-            )
+                if analysis_result["success"]:
+                    image_description = analysis_result["description"]
+                    logger.info(f"Image description: {image_description[:100]}...")
 
-            if analysis_result["success"]:
-                image_description = analysis_result["description"]
-                logger.info(f"Image description: {image_description[:100]}...")
-
-            # 从图片提取关键词
-            extracted_keywords = await self.vision_service.extract_keywords_from_image(
-                image_base64=image_base64
-            )
-            if extracted_keywords:
-                keywords = list(set(keywords + extracted_keywords))
-                logger.info(f"Combined keywords: {keywords}")
+                # 从图片提取关键词
+                extracted_keywords = await self.vision_service.extract_keywords_from_image(
+                    image_base64=images_base64[0]
+                )
+                if extracted_keywords:
+                    keywords = list(set(keywords + extracted_keywords))
+                    logger.info(f"Combined keywords: {keywords}")
 
         # 步骤 2: 生成文案
-        if images:
-            logger.info("Generating copywriting with vision API...")
+        if images_base64:
+            logger.info(f"Generating copywriting with vision API using {len(images_base64)} image(s)...")
             output_content = await self.vision_service.generate_copywriting_from_image(
-                image_base64=image_base64,
+                images_base64=images_base64,
                 platform=platform,
                 emotion_level=emotion_level,
                 additional_keywords=keywords if keywords else None

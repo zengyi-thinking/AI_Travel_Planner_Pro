@@ -16,13 +16,19 @@
           </div>
         </div>
 
-        <div class="text-slate-600 leading-relaxed whitespace-pre-line">
-          {{ content }}
+        <!-- 显示实际上传的图片 -->
+        <div v-if="displayImages.length > 0" class="space-y-2 mb-4">
+          <img
+            v-for="(img, idx) in displayImages"
+            :key="idx"
+            :src="img"
+            class="w-full rounded-xl shadow-md"
+            alt="上传的图片"
+          >
         </div>
 
-        <div class="grid grid-cols-2 gap-2 mt-4">
-          <div class="h-32 bg-slate-200 rounded-lg animate-pulse"></div>
-          <div class="h-32 bg-slate-200 rounded-lg animate-pulse"></div>
+        <div class="text-slate-600 leading-relaxed whitespace-pre-line">
+          {{ content }}
         </div>
       </div>
 
@@ -44,21 +50,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const props = withDefaults(
   defineProps<{
     content: string
+    images?: string[]
     userName?: string
     location?: string
   }>(),
   {
+    images: () => [],
     userName: 'Alex Chen',
     location: '冰岛'
   }
 )
+
+// 显示的图片列表（优先使用传入的图片）
+const displayImages = computed(() => {
+  if (props.images && props.images.length > 0) {
+    return props.images
+  }
+  return []
+})
 
 const copyButtonText = ref('复制')
 const copyTimeout = ref<number | null>(null)

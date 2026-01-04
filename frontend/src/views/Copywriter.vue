@@ -19,7 +19,11 @@
             @generate="generateContent"
           />
 
-          <ResultPreview :content="generatedContent" class="fade-in-up" />
+          <ResultPreview 
+            :content="generatedContent" 
+            :images="generatedImages"
+            class="fade-in-up" 
+          />
         </div>
       </div>
     </main>
@@ -38,6 +42,7 @@ import { useCopywritingStore } from '@/stores/copywriting'
 const copywritingStore = useCopywritingStore()
 const { selectedPlatform, keywords, emotionLevel, currentResult, uploadedImages, isGenerating } = storeToRefs(copywritingStore)
 const generatedContent = computed(() => currentResult.value?.content || '')
+const generatedImages = computed(() => currentResult.value?.images || [])
 
 const generateContent = async () => {
   await copywritingStore.generateCopywriting({

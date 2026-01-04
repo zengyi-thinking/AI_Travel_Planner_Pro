@@ -1,11 +1,11 @@
-// API 响应类型定义
+﻿// API 鍝嶅簲绫诲瀷瀹氫箟
 export interface ApiResponse<T = any> {
   code: number
   message: string
   data: T
 }
 
-// 分页响应类型
+// 鍒嗛〉鍝嶅簲绫诲瀷
 export interface PaginatedResponse<T = any> {
   items: T[]
   total: number
@@ -14,12 +14,12 @@ export interface PaginatedResponse<T = any> {
   total_pages: number
 }
 
-// API 请求参数类型
+// API 璇锋眰鍙傛暟绫诲瀷
 export interface ApiRequest {
   [key: string]: any
 }
 
-// 用户相关类型
+// 鐢ㄦ埛鐩稿叧绫诲瀷
 export interface User {
   id: number
   email: string
@@ -41,7 +41,7 @@ export interface RegisterRequest {
   name: string
 }
 
-// 行程规划相关类型 (V2.0 - 支持丰富的实用信息)
+// 琛岀▼瑙勫垝鐩稿叧绫诲瀷 (V2.0 - 鏀寔涓板瘜鐨勫疄鐢ㄤ俊鎭?
 export interface Itinerary {
   id: number
   user_id: number
@@ -54,7 +54,7 @@ export interface Itinerary {
   status: 'draft' | 'active' | 'completed' | 'archived'
   ai_generated?: boolean
 
-  // V2 新增字段
+  // V2 鏂板瀛楁
   summary?: string
   highlights?: string[]
   best_season?: string
@@ -80,7 +80,7 @@ export interface ItineraryCreateRequest {
   use_strict_json?: boolean
 }
 
-// 费用明细
+// 璐圭敤鏄庣粏
 export interface CostBreakdown {
   transportation: number
   accommodation: number
@@ -90,7 +90,7 @@ export interface CostBreakdown {
   other: number
 }
 
-// 行前准备
+// 琛屽墠鍑嗗
 export interface PreparationInfo {
   documents: string[]
   essentials: string[]
@@ -98,7 +98,7 @@ export interface PreparationInfo {
   booking_reminders: string[]
 }
 
-// 实用提示
+// 瀹炵敤鎻愮ず
 export interface TravelTips {
   transportation?: string
   accommodation?: string
@@ -108,7 +108,7 @@ export interface TravelTips {
   other?: string[]
 }
 
-// 每日行程 (V2.0)
+// 姣忔棩琛岀▼ (V2.0)
 export interface DayPlan {
   day_number: number
   title: string
@@ -120,15 +120,15 @@ export interface DayPlan {
   accommodation?: AccommodationInfo
 }
 
-// 活动信息 (V2.0 - 用户友好设计)
+// 娲诲姩淇℃伅 (V2.0 - 鐢ㄦ埛鍙嬪ソ璁捐)
 export interface Activity {
-  // 基本信息
+  // 鍩烘湰淇℃伅
   title: string
   type: 'attraction' | 'meal' | 'transport' | 'accommodation' | 'shopping' | 'entertainment'
   time: string
   duration: string
 
-  // 景点/活动信息
+  // 鏅偣/娲诲姩淇℃伅
   description: string
   highlights?: string[]
   address?: string
@@ -136,30 +136,30 @@ export interface Activity {
   need_booking?: boolean
   booking_info?: string
 
-  // 餐饮信息
+  // 椁愰ギ淇℃伅
   cuisine?: string
   average_cost: number
   recommended_dishes?: string[]
   wait_time?: string
   opening_hours?: string
 
-  // 贴士信息
+  // 璐村＋淇℃伅
   best_time?: string
   tips?: string[]
   dress_code?: string
 
-  // 交通信息
+  // 浜ら€氫俊鎭?
   transportation?: TransportationInfo
   parking_info?: string
 
-  // 技术数据（用于地图）
+  // 鎶€鏈暟鎹紙鐢ㄤ簬鍦板浘锛?
   coordinates?: {
     lng: number
     lat: number
   }
 }
 
-// 交通信息
+// 浜ら€氫俊鎭?
 export interface TransportationInfo {
   method: string
   from_location?: string
@@ -169,7 +169,7 @@ export interface TransportationInfo {
   tips?: string
 }
 
-// 住宿信息
+// 浣忓淇℃伅
 export interface AccommodationInfo {
   name: string
   address: string
@@ -179,7 +179,7 @@ export interface AccommodationInfo {
   booking_status?: string
 }
 
-// QA 聊天相关类型
+// QA 鑱婂ぉ鐩稿叧绫诲瀷
 export interface ChatMessage {
   id: number
   role: 'user' | 'assistant'
@@ -210,7 +210,7 @@ export interface QaRequest {
   context?: Record<string, any>
 }
 
-// 文案生成相关类型
+// 鏂囨鐢熸垚鐩稿叧绫诲瀷
 export interface CopywritingRequest {
   platform: 'xiaohongshu' | 'wechat' | 'weibo'
   keywords: string[]
@@ -228,7 +228,7 @@ export interface CopywritingResult {
   rating?: number | null
 }
 
-// 认证相关类型
+// 璁よ瘉鐩稿叧绫诲瀷
 export interface AuthToken {
   access_token: string
   token_type: string
@@ -244,3 +244,4 @@ export interface AuthResponse {
 
 export interface LoginResponse extends AuthResponse {}
 export interface RegisterResponse extends AuthResponse {}
+

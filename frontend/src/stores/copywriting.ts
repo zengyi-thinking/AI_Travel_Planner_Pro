@@ -10,6 +10,7 @@ interface CopywriterContentResponse {
   output_content: string
   input_data?: {
     keywords?: string[]
+    images?: string[]
   }
   rating?: number | null
   created_at: string
@@ -35,6 +36,7 @@ export const useCopywritingStore = defineStore('copywriting', () => {
         content: response.output_content,
         platform: response.platform || request.platform,
         keywords: response.input_data?.keywords || request.keywords,
+        images: request.images || [],
         created_at: response.created_at,
         rating: response.rating ?? null
       }
@@ -100,6 +102,7 @@ export const useCopywritingStore = defineStore('copywriting', () => {
         content: item.output_content,
         platform: item.platform || 'xiaohongshu',
         keywords: item.input_data?.keywords || [],
+        images: item.input_data?.images || [],
         created_at: item.created_at,
         rating: item.rating ?? null
       }))
