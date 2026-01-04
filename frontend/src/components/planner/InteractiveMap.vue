@@ -360,14 +360,12 @@ function addMarkersAndRoutes() {
         const colorIndex = (dayPlan.day_number - 1) % dayColors.length
         const routeColor = dayColors[colorIndex]
 
-        const polyline = L.polyline(dayCoordinates, {
-          color: routeColor,
-          weight: 5,
-          opacity: 0.8,
-          dashArray: '8, 8'
-        }).addTo(map.value!)
+        // 创建带箭头的路线
+        const arrowPolyline = createArrowPolyline(dayCoordinates, routeColor)
+        arrowPolyline.addTo(map.value!)
 
-        polylines.value.push(polyline)
+        polylines.value.push(arrowPolyline)
+
         console.log(`  🔗 绘制第${dayPlan.day_number}天路线: ${routeColor}, ${dayCoordinates.length}个点`)
       } catch (error) {
         console.error(`  ❌ 绘制第${dayPlan.day_number}天路线失败:`, error)
@@ -393,6 +391,78 @@ function addMarkersAndRoutes() {
   } else {
     console.warn('⚠️ 没有标记点，无法调整视图')
   }
+}
+
+/**
+ * 创建带箭头装饰的路线
+ */
+function createArrowPolyline(coordinates: [number, number][], color: string): L.Polyline {
+  if (!map.value) return L.polyline([])
+
+  // 创建图层组来包含所有元素
+  const layerGroup = L.layerGroup()
+
+  // 1. 绘制基础虚线
+  const baseLine = L.polyline(coordinates, {
+    color: color,
+    weight: 5,
+    opacity: 0.8,
+    dashArray: '10, 10',
+    lineCap: 'round'
+  })
+
+  layerGroup.addLayer(baseLine)
+
+  // 2. 在每段中间添加箭头形状
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const start = coordinates[i]
+    const end = coordinates[i + 1]
+
+    // 计算中点
+    const midLat = (start[0] + end[0]) / 2
+    const midLng = (start[1] + end[1]) / 2
+
+    // 计算角度
+    const angle = Math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / Math.PI
+
+    // 创建箭头SVG图标
+    const arrowIcon = L.divIcon({
+      className: 'route-arrow',
+      html: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 2L10 18M10 2L4 8M10 2L16 8"
+          stroke="${color}"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"/>
+      </svg>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    })
+
+    // 添加箭头标记
+    const arrowMarker = L.marker([midLat, midLng], {
+      icon: arrowIcon,
+      interactive: false,
+      zIndexOffset: 50
+    })
+
+    layerGroup.addLayer(arrowMarker)
+
+    // 旋转箭头指向正确方向
+    setTimeout(() => {
+      const element = arrowMarker.getElement()
+      if (element) {
+        const svg = element.querySelector('svg')
+        if (svg) {
+          svg.style.transform = `rotate(${angle}deg)`
+          svg.style.transformOrigin = 'center'
+        }
+      }
+    }, 0)
+  }
+
+  return layerGroup as any
 }
 
 /**
@@ -612,7 +682,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  z-index: 5;
+  z-index: 1000 !important; /* 确保始终显示在最上层 */
+  pointer-events: auto; /* 确保可以交互 */
 }
 
 .legend-panel,
@@ -817,5 +888,20 @@ onUnmounted(() => {
 
 .popup-tips li {
   margin-bottom: 0.25rem;
+}
+
+/* 方向箭头样式 */
+.direction-arrow,
+.route-arrow {
+  background: transparent !important;
+  border: none !important;
+}
+
+.direction-arrow svg,
+.route-arrow svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
 }
 </style>
