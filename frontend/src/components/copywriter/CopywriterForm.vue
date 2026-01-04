@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="glass-card p-6 flex flex-col h-full overflow-y-auto fade-in-up">
     <div class="space-y-6">
       <ImageUploader />
       <PlatformSelector v-model="platformValue" />
       <KeywordInput v-model="keywordsValue" />
       <EmotionSlider v-model="emotionValue" />
-      <GenerateButton @generate="$emit('generate')" />
+      <GenerateButton @generate="$emit('generate')" :isGenerating="isGenerating" />
     </div>
   </div>
 </template>
@@ -22,6 +22,7 @@ const props = defineProps<{
   platform: 'xiaohongshu' | 'wechat' | 'weibo'
   keywords: string
   emotion: number
+  isGenerating?: boolean
 }>()
 
 const emit = defineEmits<{

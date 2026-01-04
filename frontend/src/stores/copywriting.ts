@@ -29,7 +29,7 @@ export const useCopywritingStore = defineStore('copywriting', () => {
   const generateCopywriting = async (request: CopywritingRequest) => {
     isGenerating.value = true
     try {
-      const response = await api.post<CopywriterContentResponse>('/copywriter/generate', request)
+      const response = await api.post<CopywriterContentResponse>('/api/v1/copywriter/generate', request)
       const result: CopywritingResult = {
         id: response.id,
         content: response.output_content,
@@ -70,7 +70,7 @@ export const useCopywritingStore = defineStore('copywriting', () => {
       for (const file of files) {
         const formData = new FormData()
         formData.append('image', file)
-        const response = await api.post<{ image_url: string }>('/copywriter/upload-image', formData, {
+        const response = await api.post<{ image_url: string }>('/api/v1/copywriter/upload-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         urls.push(response.image_url)
@@ -92,7 +92,7 @@ export const useCopywritingStore = defineStore('copywriting', () => {
   // 获取历史生成记录
   const fetchResults = async () => {
     try {
-      const response = await api.get<CopywriterContentResponse[]>('/copywriter/contents', {
+      const response = await api.get<CopywriterContentResponse[]>('/api/v1/copywriter/contents', {
         params: { page: 1, size: 20 }
       })
       results.value = response.map(item => ({

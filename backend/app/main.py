@@ -1,4 +1,4 @@
-"""
+﻿"""
 WanderFlow AI Travel Assistant - FastAPI Application Entry Point
 
 This is the main entry point for WanderFlow backend application.
@@ -8,10 +8,12 @@ It sets up the FastAPI app, configures middleware, and registers all API routes.
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import logging
 import sys
 import os
 import asyncio
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.db.session import init_db
@@ -52,19 +54,8 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
-logger = logging.getLogger(__name__)
-
-# Create FastAPI application
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="AI-powered travel planning assistant",
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
-)
 
 # Add middleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_HOSTS,
@@ -100,6 +91,12 @@ async def startup_event():
         kb = get_knowledge_base()
         asyncio.create_task(kb.prewarm_async(prewarm_docs))
         logger.info("RAG prewarm started for: %s", prewarm_docs)
+    
+    # 挂载静态文件目录
+    static_dir = Path(__file__).parent.parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+        logger.info(f"Static files mounted at /static -> {static_dir}")
 
 
 @app.get("/")

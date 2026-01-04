@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="bg-[#F8FAFC] h-screen flex overflow-hidden">
     <AppSidebar active="copywriter" />
 
@@ -12,6 +12,7 @@
             :platform="selectedPlatform"
             :keywords="keywords"
             :emotion="emotionLevel"
+            :isGenerating="isGenerating"
             @update:platform="selectedPlatform = $event"
             @update:keywords="keywords = $event"
             @update:emotion="emotionLevel = $event"
@@ -35,7 +36,7 @@ import ResultPreview from '@/components/copywriter/ResultPreview.vue'
 import { useCopywritingStore } from '@/stores/copywriting'
 
 const copywritingStore = useCopywritingStore()
-const { selectedPlatform, keywords, emotionLevel, currentResult, uploadedImages } = storeToRefs(copywritingStore)
+const { selectedPlatform, keywords, emotionLevel, currentResult, uploadedImages, isGenerating } = storeToRefs(copywritingStore)
 const generatedContent = computed(() => currentResult.value?.content || '')
 
 const generateContent = async () => {

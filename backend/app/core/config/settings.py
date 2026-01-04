@@ -1,4 +1,4 @@
-"""
+﻿"""
 Application Settings Configuration
 
 This module manages all application settings using Pydantic Settings.
@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     ANTHROPIC_DEFAULT_HAIKU_MODEL: Optional[str] = None
     API_TIMEOUT_MS: int = 60000
 
+    # Vision API Configuration (OpenAI compatible)
+    VISION_API_KEY: Optional[str] = None
+    VISION_API_BASE_URL: Optional[str] = None
+    VISION_MODEL: Optional[str] = None
+
     # Third-party Services
     WEATHER_API_KEY: Optional[str] = None
     WEATHER_API_ID: Optional[str] = None
@@ -98,7 +103,7 @@ class Settings(BaseSettings):
 
     # AI Model Settings
     AI_TEMPERATURE: float = 0.7
-    AI_MAX_TOKENS: int = 16000  # 增加token限制以支持完整行程生成
+    AI_MAX_TOKENS: int = 16000  # 澧炲姞token闄愬埗浠ユ敮鎸佸畬鏁磋绋嬬敓鎴?
     AI_TIMEOUT: int = 60
 
     # Rate Limiting
@@ -130,3 +135,4 @@ class Settings(BaseSettings):
 
 # Create a global settings instance
 settings = Settings()
+
