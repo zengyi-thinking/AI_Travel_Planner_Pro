@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderFlow - Flutter 应用演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .phone-mockup {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .phone {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .phone:hover {
+            transform: translateY(-10px);
+        }
+
+        .phone-screen {
+            background: #f5f5f5;
+            height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .screen-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .screen-content {
+            padding: 15px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .feature-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .feature-desc {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+        }
+
+        .chat-bubble {
+            background: white;
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-bubble.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-bubble.ai {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .platform-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .platform-tag {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .platform-tag:hover,
+        .platform-tag.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .itinerary-day {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+        }
+
+        .day-content {
+            padding: 15px;
+        }
+
+        .activity {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .activity-time {
+            width: 60px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 12px;
+        }
+
+        .activity-info {
+            flex: 1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .features-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .features-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .feature-item-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 15px;
+            color: white;
+        }
+
+        .feature-item h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .feature-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .phone-mockup {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 WanderFlow</h1>
+            <p>AI 智能旅行助手 - Flutter 移动应用演示</p>
+        </div>
+
+        <div class="phone-mockup">
+            <!-- 首页 -->
+            <div class="phone">
+                <div class="phone-screen">
+                    <div class="screen-header">首页</div>
+                    <div class="screen-content">
+                        <div class="user-info">
+                            <div class="user-avatar">👤</div>
+                            <h3>您好，旅行者</h3>
+                            <p>免费会员</p>
+                            <div style="background: rgba(255,255,255,0.3); height: 8px; border-radius: 4px; margin-top: 10px;">
+                                <div style="background: white; height: 100%; width: 70%; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="section-title">功能导航</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                            <div class="feature-card" style="text-align: center;">
+                                <div class="feature-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea; margin: 0 auto 10px;">✈️</div>
+                                <div class="feature-title">AI 行程</div>
+                                <div class="feature-desc">智能规划旅行</div>
+                            </div>
+                            <div class="feature-card" style="text-align: center;">
+                                <div class="feature-icon" style="background: rgba(118, 75, 162, 0.1); color: #764ba2; margin: 0 auto 10px;">✨</div>
+                                <div class="feature-title">AI 文案</div>
+                                <div class="feature-desc">一键生成内容</div>
+                            </div>
+                            <div class="feature-card" style="text-align: center;">
+                                <div class="feature-icon" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; margin: 0 auto 10px;">🧭</div>
+                                <div class="feature-title">探索</div>
+                                <div class="feature-desc">发现新地方</div>
+                            </div>
+                            <div class="feature-card" style="text-align: center;">
+                                <div class="feature-icon" style="background: rgba(76, 175, 80, 0.1); color: #4caf50; margin: 0 auto 10px;">📋</div>
+                                <div class="feature-title">行程</div>
+                                <div class="feature-desc">查看历史</div>
+                            </div>
+                        </div>
+
+                        <div class="section-title">推荐行程</div>
+                        <div class="feature-card">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 40px;">🏔️</div>
+                            <div class="feature-title">日本京都 5 日游</div>
+                            <div class="feature-desc">体验古都文化，品尝传统美食</div>
+                            <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 12px; color: #666;">
+                                <span>📅 5 天</span>
+                                <span>💰 ¥8000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item active">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📍</div>
+                            <div>行程</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">✍️</div>
+                            <div>文案</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>对话</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 行程规划 -->
+            <div class="phone">
+                <div class="phone-screen">
+                    <div class="screen-header">生成行程</div>
+                    <div class="screen-content">
+                        <div class="section-title">创建您的专属行程</div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">目的地</label>
+                            <input type="text" class="input-field" placeholder="例如：日本京都、泰国普吉岛">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">行程天数</label>
+                            <input type="number" class="input-field" value="3" min="1" max="30">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">预算（元）</label>
+                            <input type="number" class="input-field" placeholder="选填">
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: bold;">旅行风格</label>
+                            <div class="platform-tags">
+                                <span class="platform-tag">休闲度假</span>
+                                <span class="platform-tag">文化探索</span>
+                                <span class="platform-tag">户外冒险</span>
+                                <span class="platform-tag">美食之旅</span>
+                            </div>
+                        </div>
+
+                        <button class="btn">✨ 生成行程</button>
+
+                        <div class="section-title" style="margin-top: 30px;">我的行程</div>
+
+                        <div class="itinerary-day">
+                            <div class="day-header" style="padding: 12px;">日本京都 5 日游</div>
+                            <div class="day-content">
+                                <div style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px;">
+                                    <span>📍 日本京都</span>
+                                    <span>📅 5 天</span>
+                                    <span>💰 ¥8000</span>
+                                </div>
+                                <div style="font-size: 12px; color: #666;">创建于 2025-01-05</div>
+                            </div>
+                        </div>
+
+                        <div class="itinerary-day">
+                            <div class="day-header" style="padding: 12px; background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);">泰国普吉岛 7 日游</div>
+                            <div class="day-content">
+                                <div style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px;">
+                                    <span>📍 泰国普吉岛</span>
+                                    <span>📅 7 天</span>
+                                    <span>💰 ¥12000</span>
+                                </div>
+                                <div style="font-size: 12px; color: #666;">创建于 2025-01-03</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">📍</div>
+                            <div>行程</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">✍️</div>
+                            <div>文案</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>对话</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文案生成 -->
+            <div class="phone">
+                <div class="phone-screen">
+                    <div class="screen-header">文案生成</div>
+                    <div class="screen-content">
+                        <div class="section-title">选择发布平台</div>
+                        <div class="platform-tags">
+                            <span class="platform-tag">📱 小红书</span>
+                            <span class="platform-tag">🎵 抖音</span>
+                            <span class="platform-tag">💬 微博</span>
+                            <span class="platform-tag">👥 朋友圈</span>
+                            <span class="platform-tag">📸 Instagram</span>
+                            <span class="platform-tag">🌐 通用</span>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">关键词</label>
+                            <input type="text" class="input-field" placeholder="例如：旅行,美食,海滩">
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: bold;">情感程度</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 12px;">温和</span>
+                                <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; position: relative;">
+                                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 60%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px;"></div>
+                                </div>
+                                <span style="font-size: 12px;">强烈</span>
+                            </div>
+                        </div>
+
+                        <button class="btn">✨ 生成文案</button>
+
+                        <div class="section-title" style="margin-top: 30px;">历史记录</div>
+
+                        <div class="feature-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="background: rgba(118, 75, 162, 0.1); color: #764ba2; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">小红书</span>
+                                <span style="font-size: 12px; color: #666;">2小时前</span>
+                            </div>
+                            <div style="margin-bottom: 10px;">京都旅行必看！古都文化体验超美的千本鸟居，一定要来...</div>
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <span style="background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 11px;">#旅行</span>
+                                <span style="background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 11px;">#京都</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                                <span>⭐ 4.5</span>
+                                <span style="color: #667eea;">[评分] [复制]</span>
+                            </div>
+                        </div>
+
+                        <div class="feature-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="background: rgba(0, 0, 0, 0.1); color: #333; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">抖音</span>
+                                <span style="font-size: 12px; color: #666;">5小时前</span>
+                            </div>
+                            <div style="margin-bottom: 10px;">普吉岛度假攻略阳光沙滩，海岛天堂，等你来探索！</div>
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <span style="background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 11px;">#海岛</span>
+                                <span style="background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 11px;">#度假</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                                <span>⭐ 5.0</span>
+                                <span style="color: #667eea;">[评分] [复制]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📍</div>
+                            <div>行程</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">✍️</div>
+                            <div>文案</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">💬</div>
+                            <div>对话</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 对话 -->
+            <div class="phone">
+                <div class="phone-screen">
+                    <div class="screen-header">AI 对话</div>
+                    <div class="screen-content" style="padding-bottom: 80px;">
+                        <div class="chat-bubble ai">
+                            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                                <span>🤖</span>
+                                <span style="font-weight: bold; font-size: 12px;">AI 助手</span>
+                            </div>
+                            <div>您好！有什么可以帮助您的吗？</div>
+                            <div style="font-size: 10px; opacity: 0.7; margin-top: 5px;">14:30</div>
+                        </div>
+
+                        <div class="chat-bubble user">
+                            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
+                                <span style="font-weight: bold; font-size: 12px;">我</span>
+                                <span>👤</span>
+                            </div>
+                            <div>推荐一些旅游目的地</div>
+                            <div style="font-size: 10px; opacity: 0.7; margin-top: 5px;">14:31</div>
+                        </div>
+
+                        <div class="chat-bubble ai">
+                            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                                <span>🤖</span>
+                                <span style="font-weight: bold; font-size: 12px;">AI 助手</span>
+                            </div>
+                            <div>当然！以下是一些热门的旅游目的地推荐：</div>
+                            <div style="margin-top: 10px; line-height: 1.6;">
+                                <div>1. 🇯🇵 日本京都 - 古都文化</div>
+                                <div>2. 🇹🇭 泰国普吉岛 - 海岛度假</div>
+                                <div>3. 🇫🇷 法国巴黎 - 浪漫之都</div>
+                                <div>4. 🇮🇹 意大利罗马 - 历史遗迹</div>
+                            </div>
+                            <div style="font-size: 10px; opacity: 0.7; margin-top: 5px;">14:31</div>
+                        </div>
+
+                        <div class="chat-bubble user">
+                            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
+                                <span style="font-weight: bold; font-size: 12px;">我</span>
+                                <span>👤</span>
+                            </div>
+                            <div>京都有什么好玩的？</div>
+                            <div style="font-size: 10px; opacity: 0.7; margin-top: 5px;">14:32</div>
+                        </div>
+
+                        <div style="text-align: center; color: #999; font-size: 12px; padding: 10px;">
+                            ⚙⚙⚙ 正在输入...
+                        </div>
+                    </div>
+
+                    <div style="position: absolute; bottom: 60px; left: 0; right: 0; padding: 15px; background: white; border-top: 1px solid #e0e0e0;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none;" placeholder="输入消息...">
+                            <button style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer;">→</button>
+                        </div>
+                    </div>
+
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <div class="nav-icon">🏠</div>
+                            <div>首页</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">📍</div>
+                            <div>行程</div>
+                        </div>
+                        <div class="nav-item">
+                            <div class="nav-icon">✍️</div>
+                            <div>文案</div>
+                        </div>
+                        <div class="nav-item active">
+                            <div class="nav-icon">💬</div>
+                            <div>对话</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能特性 -->
+        <div class="features-section">
+            <h2>✨ 核心功能特性</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-item-icon">🎯</div>
+                    <h3>智能行程规划</h3>
+                    <p>AI 根据您的需求自动生成个性化旅行行程，包含每日活动时间表、预算估算和实用信息</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">✍️</div>
+                    <h3>平台化文案生成</h3>
+                    <p>支持小红书、抖音、微博等主流社交平台，一键生成符合平台风格的旅游文案</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">💬</div>
+                    <h3>AI 智能对话</h3>
+                    <p>24/7 在线 AI 旅行助手，回答您的旅行问题，提供专业建议和攻略</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">🎨</div>
+                    <h3>精美 UI 设计</h3>
+                    <p>Material Design 3 设计规范，流畅的动画效果，带来卓越的用户体验</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">📊</div>
+                    <h3>数据可视化</h3>
+                    <p>行程统计、费用分析、配额管理，数据一目了然</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">🔒</div>
+                    <h3>安全可靠</h3>
+                    <p>数据加密传输，安全存储，保护用户隐私</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div style="text-align: center; color: white; margin-top: 40px; opacity: 0.9;">
+            <p style="font-size: 18px; margin-bottom: 10px;">🎉 WanderFlow Flutter 应用开发完成！</p>
+            <p style="font-size: 14px;">包含 3 大核心模块 | 20+ 页面组件 | 650+ 行代码</p>
+            <p style="font-size: 12px; margin-top: 20px;">技术栈: Flutter 3.35.7 | Dart 3.9.2 | Riverpod | GoRouter | Dio</p>
+        </div>
+    </div>
+
+    <script>
+        // 简单的交互效果
+        document.querySelectorAll('.platform-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const parent = this.closest('.phone-screen');
+                parent.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 按钮点击效果
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

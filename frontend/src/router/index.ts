@@ -31,7 +31,8 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/map-test',
     name: 'MapTest',
-    component: () => import('@/views/MapTest.vue')
+    component: () => import('@/views/MapTest.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/qa',
@@ -55,12 +56,6 @@ const routes: RouteRecordRaw[] = [
     path: '/profile/edit',
     name: 'ProfileEdit',
     component: () => import('@/views/ProfileEdit.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/debug-profile',
-    name: 'ProfileDebug',
-    component: () => import('@/views/ProfileEditSimple.vue'),
     meta: { requiresAuth: true }
   }
 ]

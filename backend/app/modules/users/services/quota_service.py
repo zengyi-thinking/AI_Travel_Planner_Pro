@@ -9,7 +9,7 @@ from typing import Tuple, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.users.daos.user_dao import UserDAO
 from app.modules.users.models.user import User
-from fastapi import HTTPException, status
+from app.common.exceptions.base import QuotaExceededException, NotFoundException
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,14 +37,11 @@ class QuotaService:
             更新后的用户对象
 
         Raises:
-            HTTPException: 配额已用尽
+            QuotaExceededException: 配额已用尽
         """
         user = await self.user_dao.get_by_id(user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise NotFoundException("User not found")
 
         # 检查是否需要重置配额（每月重置）
         await self._reset_quota_if_needed(user)
@@ -58,15 +55,11 @@ class QuotaService:
         # 检查免费用户配额
         if user.plan_usage_count >= self.FREE_PLAN_LIMIT:
             logger.warning(f"User {user_id} exceeded plan quota ({user.plan_usage_count}/{self.FREE_PLAN_LIMIT})")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "error": "quota_exceeded",
-                    "message": f"已达到免费计划配额上限（{self.FREE_PLAN_LIMIT} 次/月）",
-                    "usage": user.plan_usage_count,
-                    "limit": self.FREE_PLAN_LIMIT,
-                    "suggestion": "升级到 Pro 版本即可无限量使用"
-                }
+            raise QuotaExceededException(
+                message=f"已达到免费计划配额上限（{self.FREE_PLAN_LIMIT} 次/月）",
+                usage=user.plan_usage_count,
+                limit=self.FREE_PLAN_LIMIT,
+                quota_type="plan"
             )
 
         # 增加使用次数
@@ -86,14 +79,11 @@ class QuotaService:
             更新后的用户对象
 
         Raises:
-            HTTPException: 配额已用尽
+            QuotaExceededException: 配额已用尽
         """
         user = await self.user_dao.get_by_id(user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise NotFoundException("User not found")
 
         # 检查是否需要重置配额（每月重置）
         await self._reset_quota_if_needed(user)
@@ -108,15 +98,11 @@ class QuotaService:
         # 这里我们使用相同的限制
         if user.copywriter_usage_count >= self.FREE_PLAN_LIMIT:
             logger.warning(f"User {user_id} exceeded copywriter quota")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "error": "quota_exceeded",
-                    "message": f"已达到免费计划配额上限（{self.FREE_PLAN_LIMIT} 次/月）",
-                    "usage": user.copywriter_usage_count,
-                    "limit": self.FREE_PLAN_LIMIT,
-                    "suggestion": "升级到 Pro 版本即可无限量使用"
-                }
+            raise QuotaExceededException(
+                message=f"已达到免费计划配额上限（{self.FREE_PLAN_LIMIT} 次/月）",
+                usage=user.copywriter_usage_count,
+                limit=self.FREE_PLAN_LIMIT,
+                quota_type="copywriter"
             )
 
         await self._increment_usage(user, 'copywriter')
@@ -136,10 +122,7 @@ class QuotaService:
         """
         user = await self.user_dao.get_by_id(user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise NotFoundException("User not found")
 
         # 检查是否需要重置配额
         await self._reset_quota_if_needed(user)

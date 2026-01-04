@@ -1,0 +1,82 @@
+name: CD - 自动部署
+
+on:
+  workflow_run:
+    workflows: [CI - 测试与构建]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  # 部署到服务器
+  deploy:
+    needs: docker
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 构建并推送最新镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}-backend:latest
+
+      - name: 构建并推送前端镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}-frontend:latest
+
+      - name: 部署到服务器
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd wanderflow
+
+            # 拉取最新代码
+            git pull origin main
+
+            # 拉取最新镜像
+            docker pull ${{ env.REGISTRY }}/${{ github.repository }}-backend:latest
+            docker pull ${{ env.REGISTRY }}/${{ github.repository }}-frontend:latest
+
+            # 重新启动服务
+            cd deploy/docker
+            docker-compose down
+            docker-compose up -d
+
+            # 清理旧镜像
+            docker image prune -f
+
+            echo "部署完成！"
+
+      - name: 发送部署通知
+        if: always()
+        uses: appleboy/telegram-action@v1.0.3
+        with:
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            🚀 WanderFlow 部署通知
+            状态: ${{ job.status }}
+            分支: main
+            时间: ${{ github.event.head_commit.timestamp }}
+            查看: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}

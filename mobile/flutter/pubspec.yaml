@@ -1,0 +1,77 @@
+name: wanderflow_app
+description: WanderFlow AI Travel Planner Mobile App
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI 框架
+  cupertino_icons: ^1.0.2
+  google_fonts: ^6.1.0
+
+  # 状态管理
+  provider: ^6.1.0
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  # 网络请求
+  dio: ^5.4.0
+  dio_http_formatter: ^3.0.0
+  http: ^1.1.0
+
+  # 本地存储
+  shared_preferences: ^2.2.0
+  flutter_secure_storage: ^9.0.0
+
+  # 路由
+  go_router: ^13.0.0
+
+  # 图片处理
+  image_picker: ^1.0.4
+  cached_network_image: ^3.3.0
+
+  # 工具库
+  intl: ^0.18.1
+  uuid: ^4.2.0
+  loading_overlay: ^0.3.0
+  fluttertoast: ^8.2.2
+  toast: ^0.3.0
+
+  # 语音相关
+  speech_to_text: ^6.6.0
+  flutter_tts: ^4.0.0
+
+  # 地图
+  flutter_map: ^6.0.0
+  latlong2: ^0.9.0
+
+  # 权限处理
+  permission_handler: ^11.1.0
+
+  # 分享功能
+  share_plus: ^7.2.0
+
+  # 设备信息
+  device_info_plus: ^9.1.0
+  package_info_plus: ^5.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.6
+  riverpod_generator: ^2.3.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/

@@ -1,0 +1,43 @@
+name: 定时备份
+
+on:
+  schedule:
+    # 每天凌晨 3 点自动备份
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # 手动触发备份
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 部署到服务器并备份
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd wanderflow
+            ./deploy.sh backup
+
+      - name: 上传备份到云存储
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_id }}
+          path: deploy/backups/
+          retention-days: 30
+
+      - name: 发送备份通知
+        uses: appleboy/telegram-action@v1.0.3
+        with:
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            💾 WanderFlow 备份完成
+            时间: ${{ github.run_started_at }}
+            状态: 成功

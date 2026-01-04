@@ -17,6 +17,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.db.session import init_db
+from app.common.exceptions.base import http_exception_from_wanderflow_exception, WanderFlowException
 from app.modules.users.api.v1 import router as users_router
 from app.modules.users.api.settings import router as users_settings_router
 from app.modules.planner.api.v1 import router as planner_router
@@ -72,6 +73,21 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     logger.info(f"Response: {response.status_code}")
     return response
+
+
+@app.exception_handler(WanderFlowException)
+async def wanderflow_exception_handler(request: Request, exc: WanderFlowException):
+    """
+    Global exception handler for WanderFlowException.
+
+    Converts all WanderFlowException to standardized HTTP responses.
+    """
+    logger.warning(f"WanderFlowException: {exc.message} (code: {exc.code})")
+    http_exc = http_exception_from_wanderflow_exception(exc)
+    return JSONResponse(
+        status_code=http_exc.status_code,
+        content=http_exc.detail
+    )
 
 
 @app.on_event("startup")

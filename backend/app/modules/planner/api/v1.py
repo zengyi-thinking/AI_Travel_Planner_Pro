@@ -140,7 +140,7 @@ async def export_itinerary_pdf(
     current_user = Depends(get_current_user)
 ):
     """导出行程为 PDF"""
-    from app.modules.planner.services.pdf_service_v2 import PDFExportServiceV2
+    from app.modules.planner.services.pdf_service import PDFExportService
     from fastapi.responses import Response
     from sqlalchemy import select
     from app.modules.planner.models.itinerary import Itinerary
@@ -189,7 +189,7 @@ async def export_itinerary_pdf(
     }
 
     # Generate PDF
-    pdf_service = PDFExportServiceV2()
+    pdf_service = PDFExportService()
     pdf_bytes = pdf_service.generate_itinerary_pdf(itinerary_dict)
 
     # Return PDF file

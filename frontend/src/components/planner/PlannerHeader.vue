@@ -62,10 +62,11 @@ const handleExportPDF = async () => {
   try {
     isExporting.value = true
 
-    // 调用后端API导出PDF
+    // 调用后端API导出PDF，使用环境变量中的API基础URL
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
     const token = localStorage.getItem('token')
     const response = await fetch(
-      `http://localhost:8000/api/v1/planner/itineraries/${props.itinerary.id}/export/pdf`,
+      `${apiBaseUrl}/planner/itineraries/${props.itinerary.id}/export/pdf`,
       {
         method: 'GET',
         headers: {

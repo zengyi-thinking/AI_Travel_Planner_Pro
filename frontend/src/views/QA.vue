@@ -298,21 +298,122 @@ const mapWeather = (item: any) => {
   }
 }
 
-const startRecording = () => {
-  voiceRecording.value = true
-  voiceStatusText.value = '正在录音...'
+const startRecording = async () => {
+  // 检查浏览器是否支持语音识别
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    voiceStatusText.value = '您的浏览器不支持语音识别'
+    return
+  }
+
+  try {
+    // 请求麦克风权限
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+
+    // 初始化语音识别
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'zh-CN'
+    recognition.interimResults = true
+    recognition.continuous = true
+
+    let finalTranscript = ''
+
+    recognition.onstart = () => {
+      voiceRecording.value = true
+      voiceStatusText.value = '正在聆听...'
+    }
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript
+        } else {
+          interimTranscript += transcript
+        }
+      }
+      voiceStatusText.value = interimTranscript || '正在聆听...'
+    }
+
+    recognition.onerror = (event: any) => {
+      console.error('语音识别错误:', event.error)
+      voiceRecording.value = false
+      if (event.error === 'not-allowed') {
+        voiceStatusText.value = '麦克风权限被拒绝'
+      } else if (event.error === 'no-speech') {
+        voiceStatusText.value = '未检测到语音，请重试'
+      } else {
+        voiceStatusText.value = '语音识别错误'
+      }
+    }
+
+    recognition.onend = () => {
+      voiceRecording.value = false
+      if (finalTranscript) {
+        inputMessage.value = finalTranscript
+        voiceStatusText.value = `识别完成: ${finalTranscript.substring(0, 20)}...`
+        voiceHasPlayback.value = true
+      } else {
+        voiceStatusText.value = '点击开始录音'
+        voiceHasPlayback.value = false
+      }
+    }
+
+    // 开始识别
+    recognition.start()
+    ;(window as any).speechRecognition = recognition
+    voiceStatusText.value = '正在聆听...'
+  } catch (error) {
+    console.error('获取麦克风权限失败:', error)
+    voiceStatusText.value = '无法访问麦克风'
+  }
 }
 
 const stopRecording = () => {
+  const recognition = (window as any).speechRecognition
+  if (recognition) {
+    recognition.stop()
+    delete (window as any).speechRecognition
+  }
   voiceRecording.value = false
   voiceStatusText.value = '录音已停止'
-  voiceHasPlayback.value = true
 }
 
 const playRecording = () => {
-  voiceStatusText.value = '播放中...'
-  setTimeout(() => {
+  if (!('speechSynthesis' in window)) {
+    voiceStatusText.value = '浏览器不支持语音合成'
+    return
+  }
+
+  // 获取最后一条助手回复并朗读
+  const lastAssistantMessage = messages.value
+    .filter((m) => m.role === 'assistant')
+    .pop()
+
+  if (!lastAssistantMessage) {
+    voiceStatusText.value = '没有可播放的内容'
+    return
+  }
+
+  const utterance = new SpeechSynthesisUtterance(lastAssistantMessage.content)
+  utterance.lang = 'zh-CN'
+  utterance.rate = 1.0
+  utterance.pitch = 1.0
+
+  utterance.onstart = () => {
+    voiceStatusText.value = '正在播放...'
+  }
+
+  utterance.onend = () => {
     voiceStatusText.value = '点击开始录音'
-  }, 1000)
+  }
+
+  utterance.onerror = () => {
+    voiceStatusText.value = '播放失败'
+  }
+
+  window.speechSynthesis.speak(utterance)
 }
 </script>
