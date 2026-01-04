@@ -15,7 +15,11 @@
     </AppSidebar>
 
     <main class="flex-1 flex flex-col relative overflow-hidden">
-      <PlannerHeader :itinerary="currentItinerary" />
+      <PlannerHeader
+        :itinerary="currentItinerary"
+        :title="headerTitle"
+        @open-history="handleOpenHistory"
+      />
 
       <!-- 未登录提示 -->
       <div v-if="!isAuthenticated" class="flex-1 flex items-center justify-center">
@@ -40,10 +44,17 @@
       <div v-else class="flex-1 overflow-y-auto p-8 relative">
         <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-50 rounded-full filter blur-[100px] -z-10 pointer-events-none"></div>
 
+        <!-- 历史模式：返回按钮 -->
+        <div v-if="isHistoryMode" class="max-w-7xl mx-auto mb-4">
+          <AppButton variant="secondary" size="sm" @click="handleBackToNew">
+            <AppIcon name="arrow-left" class="mr-1" />
+            返回创建新行程
+          </AppButton>
+        </div>
 
-        <div class="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          <!-- 左侧栏：表单和灵感 -->
-          <div class="lg:col-span-1 space-y-6">
+        <div class="grid gap-8 max-w-7xl mx-auto" :class="isHistoryMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'">
+          <!-- 左侧栏：表单和灵感（仅新建模式显示） -->
+          <div v-if="!isHistoryMode" class="lg:col-span-1 space-y-6">
             <ItineraryForm
               :destination="destination"
               :days="days"
@@ -61,7 +72,7 @@
           </div>
 
           <!-- 右侧主区域：地图和行程卡片 -->
-          <div class="lg:col-span-2 flex flex-col gap-6">
+          <div :class="isHistoryMode ? 'w-full' : 'lg:col-span-2'" class="flex flex-col gap-6">
             <MapPreview />
 
             <!-- 成功提示 -->
@@ -92,6 +103,13 @@
         </div>
       </div>
     </main>
+   
+    <!-- 历史记录浮窗 -->
+    <HistoryPanel
+      :is-open="isHistoryPanelOpen"
+      @close="handleCloseHistoryPanel"
+      @select="handleSelectHistory"
+    />
   </div>
 </template>
 
@@ -108,6 +126,7 @@ import MapPreview from '@/components/planner/MapPreview.vue'
 import PlannerHeader from '@/components/planner/PlannerHeader.vue'
 import InspirationCard from '@/components/planner/InspirationCard.vue'
 import EmptyStateCard from '@/components/planner/EmptyStateCard.vue'
+import HistoryPanel from '@/components/planner/HistoryPanel.vue'
 import { useItineraryStore } from '@/stores/itinerary'
 import { useAuthStore } from '@/stores/auth'
 import type { ItineraryCreateRequest } from '@/types/api'
@@ -122,12 +141,24 @@ const errorMessage = ref('')
 const isGeneratingDetail = ref(false)
 const isLogging = ref(false)
 
+// 历史模式状态
+const isHistoryMode = ref(false)
+const isHistoryPanelOpen = ref(false)
+
 const authStore = useAuthStore()
 const itineraryStore = useItineraryStore()
 
 // 初始化认证状态
 const { user, isAuthenticated } = storeToRefs(authStore)
 const { currentItinerary, isLoading } = storeToRefs(itineraryStore)
+
+// 计算标题（根据模式显示）
+const headerTitle = computed(() => {
+  if (isHistoryMode.value && currentItinerary.value) {
+    return currentItinerary.value.title
+  }
+  return '我的新旅程'
+})
 
 // 组件挂载时检查登录状态
 onMounted(() => {
@@ -266,6 +297,29 @@ const handleUpdateItinerary = (updatedItinerary: any) => {
   // 更新store中的行程
   itineraryStore.currentItinerary = updatedItinerary
   showSuccess('行程已保存')
+}
+
+// 打开历史记录面板
+const handleOpenHistory = () => {
+  isHistoryPanelOpen.value = true
+}
+
+// 关闭历史记录面板
+const handleCloseHistoryPanel = () => {
+  isHistoryPanelOpen.value = false
+}
+
+// 选择历史行程
+const handleSelectHistory = async (itinerary: any) => {
+  isHistoryMode.value = true
+  console.log('切换到历史行程:', itinerary)
+}
+
+// 返回新建模式
+const handleBackToNew = () => {
+  isHistoryMode.value = false
+  itineraryStore.currentItinerary = null
+  console.log('返回新建模式')
 }
 
 // 监听当前行程变化

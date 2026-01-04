@@ -398,7 +398,8 @@ class PlanService:
         size: int
     ) -> List[PlanResponse]:
         plans = await self.plan_dao.get_user_plans(user_id, page, size)
-        return [PlanResponse.model_validate(plan) for plan in plans]
+        # 使用 _build_plan_response 来正确处理 DayDetail 到 DayPlan 的转换
+        return [await self._build_plan_response(plan) for plan in plans]
 
     async def get_itinerary(self, itinerary_id: int, user_id: int) -> Optional[PlanResponse]:
         plan = await self.plan_dao.get_plan_by_id(itinerary_id, user_id)

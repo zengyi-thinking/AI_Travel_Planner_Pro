@@ -81,7 +81,9 @@ async def get_my_itineraries(
     """获取我的行程列表"""
     plan_service = PlanService(db)
     itineraries = await plan_service.get_user_itineraries(user_id=current_user.id, page=page, size=size)
-    return itineraries
+    # 使用 mode='json' 来正确序列化 datetime 对象
+    result = [itinerary.model_dump(mode='json') for itinerary in itineraries]
+    return result
 
 
 @router.get("/itineraries/{itinerary_id}", response_model=PlanResponse)

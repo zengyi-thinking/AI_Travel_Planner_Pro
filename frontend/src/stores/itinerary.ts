@@ -77,32 +77,10 @@ export const useItineraryStore = defineStore('itinerary', () => {
   const generateDetailedItinerary = async (itineraryId: number, useStrictJson: boolean = true) => {
     isLoading.value = true
     try {
-      // 使用longRunningApi以支持更长的超时时间（AI生成可能需要30-60秒）
       const response = await longRunningApi.post<Itinerary>(
         `/api/v1/planner/itineraries/${itineraryId}/generate-detail`,
         { use_strict_json: useStrictJson }
       )
-
-      // 🔍 调试：检查返回数据是否包含坐标
-      console.log('📍 [API] 详细行程生成完成')
-      console.log('📍 [API] 行程ID:', response.id)
-      console.log('📍 [API] days_detail数量:', response.days_detail?.length || 0)
-
-      if (response.days_detail) {
-        response.days_detail.forEach((day, dayIndex) => {
-          console.log(`📍 [API] 第${dayIndex + 1}天: ${day.title}, 活动数: ${day.activities?.length || 0}`)
-
-          if (day.activities) {
-            day.activities.forEach((activity, actIndex) => {
-              const hasCoords = activity.coordinates && activity.coordinates.lat && activity.coordinates.lng
-              console.log(`  ${actIndex + 1}. ${activity.title}: ${hasCoords ? '✅有坐标' : '❌无坐标'}`)
-              if (hasCoords) {
-                console.log(`     坐标: (${activity.coordinates.lat}, ${activity.coordinates.lng})`)
-              }
-            })
-          }
-        })
-      }
 
       if (currentItinerary.value?.id === itineraryId) {
         currentItinerary.value = response
@@ -119,7 +97,6 @@ export const useItineraryStore = defineStore('itinerary', () => {
   const optimizeItinerary = async (itineraryId: number, feedback: { feedback: string; affected_days?: number[] }) => {
     isLoading.value = true
     try {
-      // 使用longRunningApi以支持更长的超时时间（AI优化可能需要30-60秒）
       const response = await longRunningApi.post<Itinerary>(
         `/api/v1/planner/itineraries/${itineraryId}/optimize`,
         {
@@ -144,6 +121,24 @@ export const useItineraryStore = defineStore('itinerary', () => {
     return generatedPlans.value[itineraryId] || []
   }
 
+  const getItineraryById = async (id: number) => {
+    isLoading.value = true
+    try {
+      const response = await api.get<Itinerary>(`/api/v1/planner/itineraries/${id}`)
+      currentItinerary.value = response
+      return { success: true, data: response }
+    } catch (error) {
+      console.error('Failed to fetch itinerary:', error)
+      return { success: false, error: '获取行程详情失败' }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const loadHistoryItineraries = async (page = 1, size = 50) => {
+    return await fetchItineraries(page, size)
+  }
+
   return {
     itineraries,
     currentItinerary,
@@ -155,6 +150,8 @@ export const useItineraryStore = defineStore('itinerary', () => {
     deleteItinerary,
     generateDetailedItinerary,
     optimizeItinerary,
-    getGeneratedPlans
+    getGeneratedPlans,
+    getItineraryById,
+    loadHistoryItineraries
   }
 })
