@@ -2,8 +2,14 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
+// GitHub Pages 部署路径配置
+// 格式: /<仓库名>/
+// 如果使用自定义域名，设置为 '/'
+const base = process.env.GITHUB_PAGES ? '/wanderflow-ai-planner/' : '/'
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  base,
   plugins: [vue()],
   resolve: {
     alias: {
